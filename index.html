@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Event Signals & Updates — Initial SMS Block Signal Monitor — Nextier</title>
+<style>
+  :root {
+    --bg: #050608;
+    --panel: #0e1117;
+    --panel-2: #11161e;
+    --panel-3: #161c27;
+    --border: #1c2532;
+    --border-strong: #2a3445;
+    --text: #e7edf5;
+    --text-dim: #8997a8;
+    --text-muted: #4a5568;
+    --green: #16ff8c;
+    --green-dim: #0e8b4d;
+    --green-bg: rgba(22,255,140,0.08);
+    --blue: #3aaeff;
+    --blue-dim: #1f6fbf;
+    --blue-bg: rgba(58,174,255,0.08);
+    --gold: #f5b740;
+    --gold-dim: #a87a25;
+    --gold-bg: rgba(245,183,64,0.08);
+    --purple: #b27fff;
+    --purple-dim: #6e44b8;
+    --purple-bg: rgba(178,127,255,0.10);
+    --red: #ff4d5e;
+    --red-bg: rgba(255,77,94,0.10);
+    --mono: ui-monospace, "JetBrains Mono", "SF Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; }
+  body { display: flex; min-height: 100vh; }
+
+  /* ───────────────────── SIDEBAR ───────────────────── */
+  aside {
+    width: 220px;
+    flex: 0 0 220px;
+    background: #07090c;
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .brand-text { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; color: var(--text); }
+  .nav-section { padding: 8px 0; }
+  .nav-label {
+    padding: 4px 16px 6px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .nav-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 16px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.02); color: var(--text); }
+  .nav-item.active {
+    color: var(--green);
+    background: var(--green-bg);
+    border-left-color: var(--green);
+  }
+  .nav-item .badge {
+    font-family: var(--mono); font-size: 10px;
+    padding: 1px 6px; border-radius: 3px;
+    background: var(--panel-3); color: var(--text-dim);
+  }
+  .nav-item.active .badge {
+    background: rgba(22,255,140,0.16); color: var(--green);
+  }
+
+  /* ───────────────────── MAIN ───────────────────── */
+  main { flex: 1; min-width: 0; padding: 16px 20px 60px; }
+
+  .top-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .top-header h1 {
+    margin: 0; font-size: 18px; font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .top-header h1 .pill {
+    margin-left: 10px; font-size: 10px; padding: 3px 8px; border-radius: 3px;
+    background: var(--green-bg); color: var(--green); border: 1px solid var(--green-dim);
+    font-family: var(--mono); letter-spacing: 0.06em;
+    vertical-align: 2px;
+  }
+  .top-header .subtitle {
+    font-size: 11px; color: var(--text-dim);
+    font-family: var(--mono); letter-spacing: 0.04em;
+  }
+  .top-header .status-block {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .status-block .heartbeat {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 11px; color: var(--green);
+  }
+  .heartbeat::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+
+  .no-autosend {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 3px;
+    background: var(--red-bg); border: 1px solid var(--red); color: var(--red);
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.10em;
+  }
+
+  /* ───────────────────── BLOCK CARD ───────────────────── */
+  .block-card {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .block-card .row1 {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;
+  }
+  .block-card .name {
+    font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px;
+  }
+  .block-card .tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px;
+    padding: 2px 8px; border-radius: 3px;
+    background: var(--panel-3); border: 1px solid var(--border-strong);
+    color: var(--text-dim); letter-spacing: 0.04em;
+  }
+  .tag.green { color: var(--green); border-color: var(--green-dim); background: var(--green-bg); }
+  .tag.blue  { color: var(--blue); border-color: var(--blue-dim); background: var(--blue-bg); }
+  .tag.gold  { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-bg); }
+  .tag.purple{ color: var(--purple); border-color: var(--purple-dim); background: var(--purple-bg); }
+
+  .block-card .ids {
+    display: flex; flex-direction: column; gap: 4px;
+    font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+    text-align: right;
+  }
+  .block-card .ids strong { color: var(--text); }
+
+  .block-card .counters {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+    margin-top: 8px;
+  }
+  .counter {
+    background: var(--panel-3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+  .counter .label {
+    font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 4px;
+  }
+  .counter .value {
+    font-family: var(--mono); font-size: 22px; font-weight: 600;
+    color: var(--text);
+  }
+  .counter.green .value { color: var(--green); }
+  .counter.blue .value  { color: var(--blue); }
+  .counter.gold .value  { color: var(--gold); }
+  .counter.purple .value{ color: var(--purple); }
+  .counter .sub {
+    font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 2px;
+  }
+
+  /* ───────────────────── METRIC STRIP ───────────────────── */
+  .metric-strip {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px;
+  }
+  .metric {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+    padding: 10px 12px;
+  }
+  .metric .label {
+    font-size: 9.5px; letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 4px;
+  }
+  .metric .value { font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--text); }
+  .metric.green .value { color: var(--green); }
+  .metric.blue .value  { color: var(--blue); }
+  .metric.gold .value  { color: var(--gold); }
+  .metric.purple .value{ color: var(--purple); }
+  .metric .delta { font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ───────────────────── PIPELINE VISUAL ───────────────────── */
+  .pipeline-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .pipeline-card .head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .pipeline-card h3 {
+    margin: 0; font-size: 12px; letter-spacing: 0.08em; color: var(--text-dim); text-transform: uppercase;
+  }
+  .pipeline-flow {
+    display: flex; align-items: center; gap: 0;
+    overflow-x: auto; padding-bottom: 4px;
+  }
+  .stage {
+    flex: 1; min-width: 130px;
+    text-align: center;
+    padding: 10px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--panel-2);
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--text-dim);
+  }
+  .stage.active { color: var(--green); border-color: var(--green-dim); background: var(--green-bg); box-shadow: inset 0 0 10px rgba(22,255,140,0.06); }
+  .stage.warn   { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-bg); }
+  .stage.blue   { color: var(--blue); border-color: var(--blue-dim); background: var(--blue-bg); }
+  .stage.purple { color: var(--purple); border-color: var(--purple-dim); background: var(--purple-bg); }
+  .stage .num { display: block; font-size: 9px; color: var(--text-muted); letter-spacing: 0.10em; margin-bottom: 4px; }
+  .stage .label { display: block; font-weight: 600; letter-spacing: 0.03em; }
+  .arrow {
+    width: 22px; flex: 0 0 22px; text-align: center;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  /* ───────────────────── BODY ROW (table + right panel) ───────────────────── */
+  .body-row { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-bottom: 14px; }
+
+  /* tabs */
+  .tabs {
+    display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+  }
+  .tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: var(--mono); letter-spacing: 0.02em;
+  }
+  .tab.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+  }
+  .tab .count { font-size: 10px; margin-left: 4px; padding: 1px 6px; border-radius: 2px; background: var(--panel-3); color: var(--text-dim); }
+  .tab.active .count { background: rgba(22,255,140,0.16); color: var(--green); }
+
+  /* table */
+  .table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  thead th {
+    background: var(--panel-2);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    color: var(--text);
+  }
+  tbody tr:hover td { background: rgba(255,255,255,0.015); }
+  td.dim { color: var(--text-dim); }
+  td.green { color: var(--green); }
+  td.blue  { color: var(--blue); }
+  td.gold  { color: var(--gold); }
+  td.purple { color: var(--purple); }
+  td.red   { color: var(--red); }
+
+  .priority-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+  }
+  .priority-dot.high { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .priority-dot.med  { background: var(--gold); }
+  .priority-dot.low  { background: var(--text-muted); }
+
+  .chip {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 10px; letter-spacing: 0.04em;
+  }
+  .chip.green  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-dim); }
+  .chip.blue   { background: var(--blue-bg);  color: var(--blue);  border: 1px solid var(--blue-dim); }
+  .chip.gold   { background: var(--gold-bg);  color: var(--gold);  border: 1px solid var(--gold-dim); }
+  .chip.purple { background: var(--purple-bg);color: var(--purple);border: 1px solid var(--purple-dim); }
+  .chip.red    { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red); }
+  .chip.dim    { background: var(--panel-3);  color: var(--text-dim); border: 1px solid var(--border-strong); }
+
+  .row-btn {
+    font-family: var(--mono); font-size: 10px;
+    padding: 3px 8px; border-radius: 3px;
+    background: transparent; color: var(--blue); border: 1px solid var(--blue-dim);
+    cursor: pointer; letter-spacing: 0.04em;
+  }
+  .row-btn:hover { background: var(--blue-bg); }
+  .row-btn.gold  { color: var(--gold); border-color: var(--gold-dim); }
+  .row-btn.gold:hover { background: var(--gold-bg); }
+  .row-btn.purple{ color: var(--purple); border-color: var(--purple-dim); }
+  .row-btn.purple:hover { background: var(--purple-bg); }
+
+  /* ───────────────────── RIGHT PANEL ───────────────────── */
+  .right-panel { display: flex; flex-direction: column; gap: 12px; }
+  .panel-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .panel-card h4 {
+    margin: 0 0 8px; font-size: 11px; letter-spacing: 0.10em; color: var(--text-dim); text-transform: uppercase;
+  }
+  .action-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .action-list li {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; color: var(--text);
+  }
+  .action-list li .marker { width: 12px; flex: 0 0 12px; font-family: var(--mono); font-weight: 700; }
+  .action-list li.allow { color: var(--green); }
+  .action-list li.allow .marker::before { content: "+"; }
+  .action-list li.block { color: var(--red); text-decoration: line-through; text-decoration-color: var(--red); }
+  .action-list li.block .marker::before { content: "×"; }
+  .approval-btn {
+    width: 100%; margin-top: 6px;
+    padding: 8px 10px;
+    background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-dim);
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    border-radius: 3px; cursor: pointer;
+  }
+  .approval-btn:hover { background: rgba(58,174,255,0.16); }
+  .approval-btn.purple { color: var(--purple); border-color: var(--purple-dim); background: var(--purple-bg); }
+  .approval-btn.gold { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-bg); }
+  .approval-btn.muted { color: var(--text-dim); border-color: var(--border-strong); background: var(--panel-3); cursor: not-allowed; }
+
+  .approval-note {
+    margin-top: 8px; padding: 6px 8px;
+    border-radius: 3px; background: var(--red-bg); color: var(--red);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em;
+    border: 1px solid var(--red);
+  }
+
+  /* ───────────────────── BOTTOM CARDS ───────────────────── */
+  .bottom-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .bottom-card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px; }
+  .bottom-card h4 { margin: 0 0 10px; font-size: 11px; letter-spacing: 0.10em; color: var(--text-dim); text-transform: uppercase; }
+
+  .lineage-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-family: var(--mono); font-size: 11px; }
+  .lineage-row .k { color: var(--text-dim); }
+  .lineage-row .v { color: var(--text); }
+  .lineage-row .v.gold { color: var(--gold); }
+  .lineage-row .v.green { color: var(--green); }
+
+  .run-line { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-family: var(--mono); font-size: 11px; border-bottom: 1px dashed var(--border); }
+  .run-line:last-child { border-bottom: 0; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-family: var(--mono); font-size: 11px; }
+  .bar-row .lbl { flex: 0 0 165px; color: var(--text-dim); font-size: 10.5px; letter-spacing: 0.04em; }
+  .bar-row .bar { flex: 1; height: 6px; background: var(--panel-3); border-radius: 3px; overflow: hidden; }
+  .bar-row .bar > span { display: block; height: 100%; }
+  .bar-row .num { flex: 0 0 28px; text-align: right; color: var(--text); }
+
+  /* ───────────────────── FOOTER NOTE ───────────────────── */
+  .footer-note {
+    margin-top: 18px; padding: 10px 14px;
+    background: var(--panel); border: 1px dashed var(--border-strong); border-radius: 4px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--text-muted); text-align: center;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+<aside>
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <div class="brand-text">NEXTIER.AI</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Execute</div>
+    <div class="nav-item">Dashboard</div>
+    <div class="nav-item">MCP Pipeline Terminal</div>
+    <div class="nav-item">Properties</div>
+    <div class="nav-item">Initial SMS Launch</div>
+    <div class="nav-item active">Event Signals &amp; Updates <span class="badge">LIVE</span></div>
+    <div class="nav-item">Nudge Workspace</div>
+    <div class="nav-item">Inbound Factory</div>
+    <div class="nav-item">Contact Center</div>
+    <div class="nav-item">Focus Calendar</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Campaigns</div>
+    <div class="nav-item">Create Campaign</div>
+    <div class="nav-item">Campaign Director</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Workspace</div>
+    <div class="nav-item">EHO Advisor <span class="badge">EHOA</span></div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════ MAIN ═══════════════════════════════ -->
+<main>
+
+  <!-- TOP HEADER -->
+  <div class="top-header">
+    <div>
+      <h1>Event Signals &amp; Updates <span class="pill">LIVE MONITOR</span></h1>
+      <div class="subtitle">Initial SMS Block Signal Monitor · changes detected, classified, prioritized, and routed</div>
+    </div>
+    <div class="status-block">
+      <div class="heartbeat">SIGNAL_EVENTS HEARTBEAT · 0 last hour</div>
+      <div class="no-autosend">NO AUTO-SEND</div>
+    </div>
+  </div>
+
+  <!-- BLOCK CARD -->
+  <div class="block-card">
+    <div class="row1">
+      <div>
+        <div class="name">Initial SMS Block · Suffolk Estate · Non-Distress · 2026-05-07 Sub Block</div>
+        <div class="tags">
+          <span class="tag green">READY_FOR_SMS</span>
+          <span class="tag gold">review required</span>
+          <span class="tag">EHOA</span>
+          <span class="tag">SUFFOLK · NY</span>
+          <span class="tag">ESTATE</span>
+          <span class="tag">NON-DISTRESS</span>
+          <span class="tag blue">rail · signalhouse</span>
+          <span class="tag purple">operator · Sabrina</span>
+        </div>
+      </div>
+      <div class="ids">
+        <div>campaign_block_id <strong>cblk_ny_suffolk_estate_non_distress_20260510_28</strong></div>
+        <div>main_inception_pool_id <strong>sb_533b702e9d1b4b5382</strong></div>
+        <div>signal_type <strong>Estate-Non-Distress</strong></div>
+        <div>workspace <strong>real_estate_api</strong></div>
+      </div>
+    </div>
+    <div class="counters">
+      <div class="counter blue">
+        <div class="label">Delivered (SignalHouse)</div>
+        <div class="value">0</div>
+        <div class="sub">awaiting launch</div>
+      </div>
+      <div class="counter green">
+        <div class="label">MOBILE_CONNECTED</div>
+        <div class="value">0</div>
+        <div class="sub">candidates: 1,596</div>
+      </div>
+      <div class="counter gold">
+        <div class="label">OPPT</div>
+        <div class="value">0</div>
+        <div class="sub">pending classification</div>
+      </div>
+      <div class="counter purple">
+        <div class="label">APPT</div>
+        <div class="value">0</div>
+        <div class="sub">→ Focus Calendar</div>
+      </div>
+      <div class="counter">
+        <div class="label">Days Since Launch</div>
+        <div class="value">0</div>
+        <div class="sub">launch pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METRIC STRIP -->
+  <div class="metric-strip">
+    <div class="metric"><div class="label">Tracked IDs</div><div class="value">25,781</div><div class="delta">pool · sb_533b…b5382</div></div>
+    <div class="metric blue"><div class="label">Delivered Mobiles</div><div class="value">0</div><div class="delta">SignalHouse truth</div></div>
+    <div class="metric gold"><div class="label">Detected Changes</div><div class="value">7</div><div class="delta">last 24h · 10K ids polled</div></div>
+    <div class="metric green"><div class="label">signal_events Written</div><div class="value">7</div><div class="delta">idempotency · 0 dup</div></div>
+    <div class="metric gold"><div class="label">OPPT</div><div class="value">0</div><div class="delta">awaiting reply</div></div>
+    <div class="metric purple"><div class="label">APPT</div><div class="value">0</div><div class="delta">→ Focus Calendar</div></div>
+  </div>
+
+  <!-- PIPELINE VISUAL -->
+  <div class="pipeline-card">
+    <div class="head">
+      <h3>Pipeline · Initial SMS Block → Routed Execution</h3>
+      <span class="chip dim">canonical · 9 stages</span>
+    </div>
+    <div class="pipeline-flow">
+      <div class="stage active"><span class="num">1</span><span class="label">Initial SMS Block</span></div>
+      <div class="arrow">→</div>
+      <div class="stage blue"><span class="num">2</span><span class="label">SignalHouse Delivered</span></div>
+      <div class="arrow">→</div>
+      <div class="stage"><span class="num">3</span><span class="label">Lead Journey Inception</span></div>
+      <div class="arrow">→</div>
+      <div class="stage blue"><span class="num">4</span><span class="label">RealEstateAPI Observability</span></div>
+      <div class="arrow">→</div>
+      <div class="stage warn"><span class="num">5</span><span class="label">Detect Changes</span></div>
+      <div class="arrow">→</div>
+      <div class="stage warn"><span class="num">6</span><span class="label">signal_events</span></div>
+      <div class="arrow">→</div>
+      <div class="stage"><span class="num">7</span><span class="label">Classification</span></div>
+      <div class="arrow">→</div>
+      <div class="stage"><span class="num">8</span><span class="label">Prioritization</span></div>
+      <div class="arrow">→</div>
+      <div class="stage purple"><span class="num">9</span><span class="label">Routed Execution</span></div>
+    </div>
+  </div>
+
+  <!-- BODY ROW: tabs + table + right panel -->
+  <div class="body-row">
+    <div>
+      <div class="tabs">
+        <div class="tab active">Overview <span class="count">7</span></div>
+        <div class="tab">Detected Changes <span class="count">7</span></div>
+        <div class="tab">OPPT / Replies <span class="count">0</span></div>
+        <div class="tab">No Response Signals <span class="count">0</span></div>
+        <div class="tab">Lineage <span class="count">7</span></div>
+        <div class="tab">Runs <span class="count">14</span></div>
+        <div class="tab">Errors <span class="count">0</span></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Signal Time</th>
+              <th>Property ID</th>
+              <th>Address</th>
+              <th>Signal Type</th>
+              <th>Old → New</th>
+              <th>Lead</th>
+              <th>Lineage</th>
+              <th>Priority</th>
+              <th>Recommended Route</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="dim">12:45:03</td>
+              <td class="blue">1000160972</td>
+              <td>148 Smith Ave, Holbrook NY 11741</td>
+              <td class="gold">NET_NEW_PRE_FORECLOSURE</td>
+              <td><span class="chip dim">false</span> → <span class="chip gold">true</span></td>
+              <td class="dim">— no lead</td>
+              <td><span class="chip gold">Null Lineage</span> <span class="chip dim">Backfill Eligible</span></td>
+              <td><span class="priority-dot high"></span><span class="red">HIGH</span></td>
+              <td class="purple">→ Initial SMS Launch · re-prep</td>
+              <td><button class="row-btn gold">Approve Route</button></td>
+            </tr>
+            <tr>
+              <td class="dim">12:45:03</td>
+              <td class="blue">100026673</td>
+              <td>22 Elm Rd, Babylon NY 11702</td>
+              <td class="gold">NET_NEW_AUCTION</td>
+              <td><span class="chip dim">false</span> → <span class="chip gold">true</span></td>
+              <td class="dim">— no lead</td>
+              <td><span class="chip gold">Null Lineage</span> <span class="chip dim">Backfill Eligible</span></td>
+              <td><span class="priority-dot high"></span><span class="red">HIGH</span></td>
+              <td class="purple">→ Initial SMS Launch · escalate</td>
+              <td><button class="row-btn gold">Approve Route</button></td>
+            </tr>
+            <tr>
+              <td class="dim">12:45:02</td>
+              <td class="blue">100165222</td>
+              <td>9 Birch Ln, Patchogue NY 11772</td>
+              <td>NET_NEW_MLS_LISTED</td>
+              <td><span class="chip dim">false</span> → <span class="chip blue">true</span></td>
+              <td class="dim">— no lead</td>
+              <td><span class="chip gold">Null Lineage</span></td>
+              <td><span class="priority-dot med"></span><span class="gold">MED</span></td>
+              <td>→ Watchlist (treat as lost while listed)</td>
+              <td><button class="row-btn">Acknowledge</button></td>
+            </tr>
+            <tr>
+              <td class="dim">12:45:02</td>
+              <td class="blue">10058391</td>
+              <td>312 Cedar St, Bay Shore NY 11706</td>
+              <td>NET_NEW_VACANT</td>
+              <td><span class="chip dim">false</span> → <span class="chip blue">true</span></td>
+              <td class="green">lead_01J… Maharaj</td>
+              <td><span class="chip green">Linked</span> <span class="chip blue">cblk_…_28</span></td>
+              <td><span class="priority-dot med"></span><span class="gold">MED</span></td>
+              <td class="purple">→ Nudge Workspace</td>
+              <td><button class="row-btn purple">Approve Route</button></td>
+            </tr>
+            <tr>
+              <td class="dim">12:45:02</td>
+              <td class="blue">10070489</td>
+              <td>77 Maple Dr, Riverhead NY 11901</td>
+              <td>NET_NEW_ABSENTEE</td>
+              <td><span class="chip dim">false</span> → <span class="chip blue">true</span></td>
+              <td class="dim">— no lead</td>
+              <td><span class="chip gold">Null Lineage</span></td>
+              <td><span class="priority-dot low"></span><span class="dim">LOW</span></td>
+              <td>→ Inception Pool · enrich next cycle</td>
+              <td><button class="row-btn">Acknowledge</button></td>
+            </tr>
+            <tr>
+              <td class="dim">11:18:44</td>
+              <td class="blue">9947002</td>
+              <td>411 Oak Way, Huntington NY 11743</td>
+              <td>OPPT_REPLY_DETECTED</td>
+              <td><span class="chip dim">unread</span> → <span class="chip green">replied</span></td>
+              <td class="green">lead_01J… O'Connor</td>
+              <td><span class="chip green">Linked</span></td>
+              <td><span class="priority-dot high"></span><span class="red">HIGH</span></td>
+              <td class="purple">→ Contact Center + Focus Calendar</td>
+              <td><button class="row-btn purple">Approve Route</button></td>
+            </tr>
+            <tr>
+              <td class="dim">11:18:44</td>
+              <td class="blue">9959820</td>
+              <td>56 Pine Ct, Smithtown NY 11787</td>
+              <td class="red">SUPPRESSION · STOP</td>
+              <td><span class="chip dim">contactable</span> → <span class="chip red">opted_out</span></td>
+              <td class="green">lead_01J… Pellegrini</td>
+              <td><span class="chip green">Linked</span></td>
+              <td><span class="priority-dot high"></span><span class="red">COMPLIANCE</span></td>
+              <td class="red">→ Outbound Gate · permanent block</td>
+              <td><button class="row-btn gold">Auto-Applied</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="panel-card">
+        <h4>Action Authority</h4>
+        <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px; font-family:var(--mono);">
+          Per canon: MCP exits at TRACERFY_QUEUED. Event Signals routes only — does not send, book, or mutate journey.
+        </div>
+
+        <div style="margin-top:8px;">
+          <div style="font-size:9.5px; letter-spacing:0.10em; color:var(--green); margin-bottom:4px;">ALLOWED</div>
+          <ul class="action-list">
+            <li class="allow"><span class="marker"></span>Re-prep Initial SMS Block</li>
+            <li class="allow"><span class="marker"></span>Route to Nudge Workspace</li>
+            <li class="allow"><span class="marker"></span>Push to Contact Center</li>
+            <li class="allow"><span class="marker"></span>Mark as OPPT (operator)</li>
+            <li class="allow"><span class="marker"></span>Schedule APPT (operator)</li>
+            <li class="allow"><span class="marker"></span>Backfill lineage when lead created</li>
+            <li class="allow"><span class="marker"></span>Acknowledge low-priority signal</li>
+          </ul>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div style="font-size:9.5px; letter-spacing:0.10em; color:var(--red); margin-bottom:4px;">BLOCKED</div>
+          <ul class="action-list">
+            <li class="block"><span class="marker"></span>Auto-send SMS</li>
+            <li class="block"><span class="marker"></span>Auto-create OPPT</li>
+            <li class="block"><span class="marker"></span>Auto-book APPT</li>
+            <li class="block"><span class="marker"></span>Mutate lead journey from MCP</li>
+            <li class="block"><span class="marker"></span>Fire PropertyDetail at block scope</li>
+            <li class="block"><span class="marker"></span>Bypass SUPER_ADMIN approval</li>
+            <li class="block"><span class="marker"></span>Cross detection-cron into outbound</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h4>Operator Approval</h4>
+        <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px; font-family:var(--mono);">
+          7 signals · 2 HIGH · 3 Null Lineage · 1 Compliance auto-applied.
+        </div>
+        <button class="approval-btn gold">Approve 3 Null-Lineage Routes</button>
+        <button class="approval-btn">Approve 2 Linked Routes</button>
+        <button class="approval-btn purple">Send to Focus Calendar (1)</button>
+        <button class="approval-btn muted">Auto-Send (Blocked)</button>
+        <div class="approval-note">No Auto-Send · Operator Approval Required · SUPER_ADMIN gate enforced</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM CARDS -->
+  <div class="bottom-row">
+
+    <!-- Lineage Truth -->
+    <div class="bottom-card">
+      <h4>Lineage Truth</h4>
+      <div class="lineage-row"><span class="k">Linked Lineage</span><span class="v green">3 of 7</span></div>
+      <div class="lineage-row"><span class="k">Null Lineage</span><span class="v gold">4 of 7 · Backfill Eligible</span></div>
+      <div class="lineage-row"><span class="k">Lead Linkage Coverage</span><span class="v">42.8%</span></div>
+      <div class="lineage-row"><span class="k">Backfill Trigger</span><span class="v">on Properties materialization</span></div>
+      <div class="lineage-row"><span class="k">Lineage Authority</span><span class="v">Properties (canonical)</span></div>
+      <div class="lineage-row"><span class="k">MCP Lineage Touch?</span><span class="v" style="color:var(--red);">forbidden</span></div>
+    </div>
+
+    <!-- Latest Detect Changes Run -->
+    <div class="bottom-card">
+      <h4>Latest Detect Changes Run</h4>
+      <div class="run-line"><span class="k">Run ID</span><span class="v">spr_lz8q3p · v2-net-new-poll</span></div>
+      <div class="run-line"><span class="k">Cadence</span><span class="v"><span class="chip blue">daily</span></span></div>
+      <div class="run-line"><span class="k">Started</span><span class="v">2026-05-20 12:45:01 UTC</span></div>
+      <div class="run-line"><span class="k">Completed</span><span class="v">2026-05-20 12:45:03 UTC · 2.6s</span></div>
+      <div class="run-line"><span class="k">Endpoint</span><span class="v">POST /v2/PropertySearch · ids_only:true</span></div>
+      <div class="run-line"><span class="k">IDs Polled</span><span class="v">10,000 · 1 chunk</span></div>
+      <div class="run-line"><span class="k">Watched Fields</span><span class="v">pre_foreclosure · auction</span></div>
+      <div class="run-line"><span class="k">Credits Used</span><span class="v green">0</span></div>
+      <div class="run-line"><span class="k">Changes Detected</span><span class="v gold">7</span></div>
+      <div class="run-line"><span class="k">signal_events Written</span><span class="v green">7</span></div>
+      <div class="run-line"><span class="k">Duplicates Skipped</span><span class="v">0 (ON CONFLICT idempotency_key)</span></div>
+    </div>
+
+    <!-- Signal Type Breakdown -->
+    <div class="bottom-card">
+      <h4>Signal Type Breakdown</h4>
+      <div class="bar-row"><span class="lbl">NET_NEW_PRE_FORECLOSURE</span><span class="bar"><span style="width:30%; background:var(--gold);"></span></span><span class="num">2</span></div>
+      <div class="bar-row"><span class="lbl">NET_NEW_AUCTION</span><span class="bar"><span style="width:15%; background:var(--gold);"></span></span><span class="num">1</span></div>
+      <div class="bar-row"><span class="lbl">NET_NEW_MLS_LISTED</span><span class="bar"><span style="width:15%; background:var(--blue);"></span></span><span class="num">1</span></div>
+      <div class="bar-row"><span class="lbl">NET_NEW_VACANT</span><span class="bar"><span style="width:15%; background:var(--blue);"></span></span><span class="num">1</span></div>
+      <div class="bar-row"><span class="lbl">NET_NEW_ABSENTEE</span><span class="bar"><span style="width:15%; background:var(--blue);"></span></span><span class="num">1</span></div>
+      <div class="bar-row"><span class="lbl">OPPT_REPLY_DETECTED</span><span class="bar"><span style="width:15%; background:var(--green);"></span></span><span class="num">1</span></div>
+      <div class="bar-row"><span class="lbl">SUPPRESSION (STOP)</span><span class="bar"><span style="width:15%; background:var(--red);"></span></span><span class="num">1</span></div>
+      <div style="margin-top:8px; font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:0.04em;">
+        Idempotency · team_id + source_property_id + signal_kind + old_value + new_value + detected_at(bucketed)
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    MCP detects · CLI/Worker executes Tracerfy · Properties stores contactability · Initial SMS Launch sends · Event Signals routes.
+    No Auto-Send. PropertyDetail single-ID only. SUPER_ADMIN approval enforced. Operator owns the next click.
+  </div>
+
+</main>
+
+</body>
+</html>
