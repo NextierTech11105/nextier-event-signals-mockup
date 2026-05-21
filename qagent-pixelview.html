@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>QAGENT · Signal Poller · Pixel View</title>
+<style>
+  :root {
+    --bg: #050803;
+    --bg-panel: #0a1208;
+    --phosphor: #2eff7a;
+    --phosphor-dim: #128a3e;
+    --phosphor-bg: rgba(46,255,122,0.06);
+    --amber: #ffaa33;
+    --amber-dim: #aa6f1c;
+    --cyan: #4fd6ff;
+    --magenta: #ff5cd6;
+    --red: #ff3a4d;
+    --gray: #4a5b48;
+    --gray-dim: #2d3a2c;
+    --text: #c9f5d3;
+    --text-dim: #6a8a72;
+    --mono: "VT323", "Press Start 2P", "Cascadia Code", ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; image-rendering: pixelated; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* CRT scanlines + flicker */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.25) 3px,
+      rgba(0,0,0,0) 4px
+    );
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 51;
+    background: radial-gradient(ellipse at center, rgba(46,255,122,0.04) 0%, rgba(0,0,0,0.4) 100%);
+    animation: flicker 4.2s infinite;
+  }
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.85; }
+    97% { opacity: 1; }
+    98% { opacity: 0.92; }
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--phosphor-dim);
+    padding: 10px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(180deg, rgba(46,255,122,0.06), transparent);
+  }
+  header .title {
+    color: var(--phosphor);
+    font-size: 18px;
+    letter-spacing: 0.20em;
+    text-shadow: 0 0 8px var(--phosphor);
+  }
+  header .subtitle {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    margin-top: 2px;
+  }
+  header .clock {
+    color: var(--amber);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 6px var(--amber);
+  }
+  header .ind {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-right: 14px;
+  }
+  header .ind .dot {
+    width: 8px; height: 8px; border-radius: 0;
+    background: var(--phosphor);
+    box-shadow: 0 0 8px var(--phosphor);
+    animation: blink 1s steps(2, end) infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  main {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 14px;
+    padding: 14px;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* PANELS */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--phosphor-dim);
+    border-radius: 0;
+    padding: 12px;
+    position: relative;
+  }
+  .panel h2 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--phosphor);
+    text-shadow: 0 0 4px var(--phosphor);
+    border-bottom: 1px dashed var(--phosphor-dim);
+    padding-bottom: 6px;
+  }
+
+  /* === LEFT: TARGET + STATS === */
+  .target-row {
+    display: flex; justify-content: space-between;
+    padding: 3px 0;
+    font-size: 12px;
+  }
+  .target-row .k { color: var(--text-dim); }
+  .target-row .v { color: var(--text); }
+  .target-row .v.amber { color: var(--amber); }
+  .target-row .v.cyan { color: var(--cyan); }
+  .target-row .v.phosphor { color: var(--phosphor); }
+  .target-row .v.red { color: var(--red); }
+
+  .stat-block {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px dashed var(--gray-dim);
+    background: rgba(46,255,122,0.02);
+  }
+  .stat-block .lbl {
+    font-size: 10px; letter-spacing: 0.12em; color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+  .stat-block .val {
+    font-size: 30px;
+    color: var(--phosphor);
+    text-shadow: 0 0 10px var(--phosphor);
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .stat-block .delta { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .stat-block.amber .val { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+  .stat-block.cyan .val { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
+  .stat-block.red .val { color: var(--red); text-shadow: 0 0 8px var(--red); }
+
+  /* === CENTER: AGENT WATCH STAGE === */
+  .stage {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 320px;
+    padding: 14px 8px;
+    border-bottom: 1px dashed var(--phosphor-dim);
+    margin-bottom: 12px;
+  }
+  .agent-art {
+    font-family: var(--mono);
+    font-size: 16px;
+    line-height: 1;
+    white-space: pre;
+    color: var(--phosphor);
+    text-shadow: 0 0 6px var(--phosphor);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+    animation: hover 3s ease-in-out infinite;
+  }
+  @keyframes hover {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .agent-label {
+    color: var(--amber); font-size: 11px; letter-spacing: 0.22em;
+    text-shadow: 0 0 4px var(--amber); margin-bottom: 6px;
+  }
+  .agent-mode {
+    color: var(--phosphor); font-size: 14px; letter-spacing: 0.12em;
+    text-shadow: 0 0 4px var(--phosphor);
+  }
+
+  /* Scanning radar bar */
+  .scan-bar {
+    width: 100%;
+    height: 14px;
+    background: rgba(46,255,122,0.04);
+    border: 1px solid var(--phosphor-dim);
+    position: relative;
+    margin-top: 18px;
+    overflow: hidden;
+  }
+  .scan-bar::before {
+    content: "";
+    position: absolute; top: 0; bottom: 0; width: 30%;
+    background: linear-gradient(90deg, transparent, var(--phosphor), transparent);
+    opacity: 0.7;
+    animation: scan 2.4s linear infinite;
+  }
+  @keyframes scan {
+    0% { left: -30%; }
+    100% { left: 100%; }
+  }
+  .scan-bar .label {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; letter-spacing: 0.22em; color: var(--text-dim);
+    z-index: 2;
+  }
+
+  /* ID grid — visualize 10K Tracked IDs as cells */
+  .id-grid {
+    display: grid;
+    grid-template-columns: repeat(50, 1fr);
+    gap: 1px;
+    width: 100%;
+    margin-top: 18px;
+  }
+  .id-grid .cell {
+    aspect-ratio: 1 / 1;
+    background: var(--gray-dim);
+    opacity: 0.4;
+  }
+  .id-grid .cell.scanning { background: var(--phosphor); box-shadow: 0 0 4px var(--phosphor); animation: blink 0.6s infinite; }
+  .id-grid .cell.hit { background: var(--amber); box-shadow: 0 0 4px var(--amber); }
+  .id-grid .cell.signal { background: var(--red); box-shadow: 0 0 4px var(--red); }
+  .grid-legend {
+    margin-top: 6px;
+    font-size: 10px; letter-spacing: 0.10em; color: var(--text-dim);
+    display: flex; gap: 14px; justify-content: center;
+  }
+  .grid-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; vertical-align: -1px; }
+  .grid-legend .tracked::before { background: var(--gray-dim); }
+  .grid-legend .scanning::before { background: var(--phosphor); }
+  .grid-legend .hit::before { background: var(--amber); }
+  .grid-legend .signal::before { background: var(--red); }
+
+  /* === RIGHT: LOG STREAM === */
+  .log {
+    height: 460px;
+    overflow-y: auto;
+    background: #030702;
+    border: 1px solid var(--phosphor-dim);
+    padding: 8px 10px;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  .log .line {
+    display: grid; grid-template-columns: 64px 76px 1fr; gap: 6px;
+    padding: 1px 0;
+  }
+  .log .line .t { color: var(--text-dim); }
+  .log .line .tag { letter-spacing: 0.08em; }
+  .log .line .tag.INFO { color: var(--cyan); }
+  .log .line .tag.POLL { color: var(--phosphor); }
+  .log .line .tag.AUTH { color: var(--amber); }
+  .log .line .tag.RX   { color: var(--cyan); }
+  .log .line .tag.HIT  { color: var(--amber); }
+  .log .line .tag.SIG  { color: var(--red); text-shadow: 0 0 6px var(--red); }
+  .log .line .tag.WRT  { color: var(--magenta); }
+  .log .line .tag.ERR  { color: var(--red); }
+  .log .line .tag.OK   { color: var(--phosphor); }
+  .log .line .tag.LIN  { color: var(--cyan); }
+  .log .line .msg { color: var(--text); }
+  .log .line .msg .ic { color: var(--phosphor); }
+  .log .line .msg .ic-amber { color: var(--amber); }
+  .log .line .msg .ic-red { color: var(--red); }
+
+  .log::-webkit-scrollbar { width: 6px; }
+  .log::-webkit-scrollbar-track { background: var(--bg-panel); }
+  .log::-webkit-scrollbar-thumb { background: var(--phosphor-dim); }
+
+  /* === STATE MACHINE FOOTER === */
+  .state-strip {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    border: 1px solid var(--phosphor-dim);
+    background: var(--bg-panel);
+    padding: 12px 14px;
+  }
+  .state-strip h2 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    color: var(--phosphor);
+    letter-spacing: 0.14em;
+    text-shadow: 0 0 4px var(--phosphor);
+  }
+  .state-flow {
+    display: flex; gap: 8px; align-items: stretch;
+    overflow-x: auto;
+  }
+  .state-step {
+    flex: 1; min-width: 110px;
+    border: 1px solid var(--gray-dim);
+    padding: 8px 6px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    background: rgba(46,255,122,0.02);
+  }
+  .state-step.done { color: var(--phosphor); border-color: var(--phosphor-dim); background: var(--phosphor-bg); }
+  .state-step.now  { color: var(--amber); border-color: var(--amber-dim); background: rgba(255,170,51,0.10); animation: blink 1.2s infinite; }
+  .state-step.next { color: var(--cyan); border-color: rgba(79,214,255,0.4); background: rgba(79,214,255,0.05); }
+  .state-step .num { display: block; font-size: 9px; color: var(--text-dim); }
+  .state-step .lbl { display: block; margin-top: 2px; }
+
+  .arrow {
+    align-self: center;
+    color: var(--phosphor-dim);
+    font-size: 14px;
+    padding: 0 4px;
+  }
+
+  footer {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.10em;
+    padding: 8px;
+  }
+
+  /* tiny pulse indicator */
+  .pulse-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 6px;
+    font-size: 10px; letter-spacing: 0.10em;
+    color: var(--text-dim);
+  }
+  .pulse-row .p {
+    width: 6px; height: 6px; background: var(--phosphor);
+    box-shadow: 0 0 6px var(--phosphor);
+    animation: blink 0.8s infinite;
+  }
+  .pulse-row .p.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .pulse-row .p.red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+</style>
+</head>
+<body>
+
+<div style="background:repeating-linear-gradient(45deg,rgba(255,170,51,0.10) 0 12px,rgba(255,170,51,0.04) 12px 24px);border-bottom:1px solid #aa6f1c;color:#ffaa33;font-family:var(--mono);font-size:11px;letter-spacing:0.14em;padding:6px 16px;text-align:center;">
+  STATIC PUBLIC DEMO · MOCK DATA ONLY · NOT A LIVE PRODUCTION AGENT
+</div>
+
+<header>
+  <div>
+    <div class="title">▰ QAGENT · SIGNAL POLLER ▰</div>
+    <div class="subtitle">v2-net-new-poll · IDs-only · 0-credit · detection-only canon</div>
+  </div>
+  <div style="display:flex; align-items:center;">
+    <div class="ind"><span class="dot"></span><span style="color:var(--phosphor); font-size:11px; letter-spacing:0.16em;">ONLINE</span></div>
+    <div class="clock" id="clock">--:--:-- UTC</div>
+  </div>
+</header>
+
+<main>
+  <!-- ════════════════════ LEFT: TARGET + STATS ════════════════════ -->
+  <section class="panel">
+    <h2>▸ TARGET BLOCK</h2>
+    <div class="target-row"><span class="k">tenant</span><span class="v">DEMO_TENANT</span></div>
+    <div class="target-row"><span class="k">team_id</span><span class="v cyan">team_…demo01</span></div>
+    <div class="target-row"><span class="k">workspace</span><span class="v">real_estate_api</span></div>
+    <div class="target-row"><span class="k">signal_block</span><span class="v cyan">sb_…demo01</span></div>
+    <div class="target-row"><span class="k">county·state</span><span class="v">DEMO·ST</span></div>
+    <div class="target-row"><span class="k">signal_type</span><span class="v">Sample-Cohort</span></div>
+    <div class="target-row"><span class="k">inception</span><span class="v">YYYY-MM-DD</span></div>
+
+    <h2 style="margin-top:14px;">▸ CADENCE · FIELDS</h2>
+    <div class="target-row"><span class="k">cadence</span><span class="v phosphor">DAILY</span></div>
+    <div class="target-row"><span class="k">field 1</span><span class="v amber">pre_foreclosure</span></div>
+    <div class="target-row"><span class="k">field 2</span><span class="v amber">auction</span></div>
+    <div class="target-row"><span class="k">guard</span><span class="v">false → true</span></div>
+
+    <h2 style="margin-top:14px;">▸ COUNTERS</h2>
+    <div class="stat-block">
+      <div class="lbl">TRACKED IDS</div>
+      <div class="val">10,000</div>
+      <div class="delta">signal_block_hits · this block</div>
+    </div>
+    <div class="stat-block cyan">
+      <div class="lbl">IDS POLLED THIS CYCLE</div>
+      <div class="val" id="polled">0</div>
+      <div class="delta">RE API /v2/PropertySearch · ids_only</div>
+    </div>
+    <div class="stat-block amber">
+      <div class="lbl">CHANGES DETECTED</div>
+      <div class="val" id="changes">0</div>
+      <div class="delta">previous=false · current=true</div>
+    </div>
+    <div class="stat-block">
+      <div class="lbl">SIGNAL_EVENTS WRITTEN</div>
+      <div class="val" id="events">0</div>
+      <div class="delta">ON CONFLICT idempotency_key</div>
+    </div>
+    <div class="stat-block red">
+      <div class="lbl">ERRORS</div>
+      <div class="val" id="errors">0</div>
+      <div class="delta">api · timeout · auth</div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ CENTER: AGENT WATCH ════════════════════ -->
+  <section class="panel">
+    <h2>▸ AGENT WATCH STAGE</h2>
+    <div class="stage">
+      <div class="agent-label">[ QAGENT ]</div>
+      <pre class="agent-art">
+   ▟▙▟▙▟▙
+  ▟ ◉◎◉ ▙
+  ▌▖    ▖▐
+  ▌▘ ▢▢ ▘▐
+  ▝▙▄▟▙▄▟▘
+   ║    ║
+  ▟▆▆▆▆▆▆▙
+      </pre>
+      <div class="agent-mode" id="mode">▸ POLLING_TRACKED_IDS</div>
+      <div class="scan-bar"><div class="label">SCAN · 10,000 IDs · daily cadence</div></div>
+      <div class="pulse-row">
+        <span class="p"></span>
+        <span id="pulse-text">REAPI /v2/PropertySearch · ids_only:true · count:false · size:10000</span>
+      </div>
+    </div>
+
+    <h2>▸ TRACKED ID UNIVERSE · 10,000 cells</h2>
+    <div class="id-grid" id="grid"></div>
+    <div class="grid-legend">
+      <span class="tracked">tracked</span>
+      <span class="scanning">scanning</span>
+      <span class="hit">field match</span>
+      <span class="signal">signal_events write</span>
+    </div>
+  </section>
+
+  <!-- ════════════════════ RIGHT: LOG STREAM ════════════════════ -->
+  <section class="panel">
+    <h2>▸ AGENT LIVE LOG</h2>
+    <div class="log" id="log">
+      <!-- log lines injected by JS -->
+    </div>
+  </section>
+
+  <!-- ════════════════════ FOOTER: STATE STRIP ════════════════════ -->
+  <section class="state-strip">
+    <h2>▸ DETECTION SPINE · 9 STAGES · QAGENT OWNS 1·2·3·4·5·6</h2>
+    <div class="state-flow">
+      <div class="state-step done"><span class="num">1</span><span class="lbl">CRON FIRE</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step done"><span class="num">2</span><span class="lbl">LOAD HITS</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step now"><span class="num">3</span><span class="lbl">POLL IDS</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step next"><span class="num">4</span><span class="lbl">DETECT CHANGE</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step"><span class="num">5</span><span class="lbl">LINEAGE LOOKUP</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step"><span class="num">6</span><span class="lbl">IDEMPOTENCY KEY</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step"><span class="num">7</span><span class="lbl">signal_events INSERT</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step"><span class="num">8</span><span class="lbl">CLASSIFY</span></div>
+      <div class="arrow">▶</div>
+      <div class="state-step"><span class="num">9</span><span class="lbl">ROUTED EXECUTION</span></div>
+    </div>
+  </section>
+
+  <footer>
+    QAGENT IS DETECTION ONLY · NO AUTO-SEND · NO LEAD JOURNEY MUTATION · NO PROPERTYDETAIL · MCP EXITS AT TRACERFY_QUEUED · OPERATOR OWNS THE NEXT CLICK
+  </footer>
+</main>
+
+<script>
+  // clock
+  function tick() {
+    const d = new Date();
+    const z = d.toISOString().split('T')[1].split('.')[0];
+    document.getElementById('clock').textContent = z + ' UTC';
+  }
+  tick(); setInterval(tick, 1000);
+
+  // build 10K grid (50x200 = 10,000)
+  const grid = document.getElementById('grid');
+  for (let i = 0; i < 10000; i++) {
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.dataset.i = i;
+    grid.appendChild(c);
+  }
+  const cells = Array.from(grid.children);
+
+  // log helpers
+  const log = document.getElementById('log');
+  function addLog(tag, msg) {
+    const d = new Date();
+    const t = d.toISOString().split('T')[1].split('.')[0];
+    const line = document.createElement('div');
+    line.className = 'line';
+    line.innerHTML = `<span class="t">${t}</span><span class="tag ${tag}">${tag.padEnd(4)}</span><span class="msg">${msg}</span>`;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+    while (log.children.length > 80) log.removeChild(log.firstChild);
+  }
+
+  // counters
+  let polled = 0, changes = 0, events = 0, errors = 0;
+  function bump(id, n=1) {
+    const el = document.getElementById(id);
+    const v = parseInt(el.textContent.replace(/,/g,'')||'0') + n;
+    el.textContent = v.toLocaleString();
+  }
+
+  // demo loop: simulate poll cycle
+  let cycle = 0;
+  let scanIdx = 0;
+  const mode = document.getElementById('mode');
+  const pulse = document.getElementById('pulse-text');
+
+  // seed boot logs
+  addLog('INFO', 'qagent boot · canon v2-net-new-poll · detection-only');
+  addLog('AUTH', 'REAPI key resolved · tenant=ehoa · 0-credit pattern');
+  addLog('INFO', 'signal_block sb_…demo01 · 10,000 tracked IDs loaded');
+
+  async function runCycle() {
+    cycle++;
+    polled = 0; changes = 0;
+    cells.forEach(c => c.className = 'cell');
+    document.getElementById('polled').textContent = '0';
+    document.getElementById('changes').textContent = '0';
+
+    mode.textContent = '▸ POLLING_TRACKED_IDS';
+    pulse.innerHTML = 'REAPI /v2/PropertySearch · ids_only:true · count:false · size:10000';
+    addLog('POLL', `cycle ${cycle} start · cadence=daily · field=pre_foreclosure`);
+    addLog('POLL', 'POST https://api.realestateapi.com/v2/PropertySearch · 10000 IDs chunked 1x');
+
+    // scan animation across grid
+    const step = 200;
+    for (let i = 0; i < cells.length; i += step) {
+      for (let j = i; j < i + step && j < cells.length; j++) {
+        cells[j].classList.add('scanning');
+      }
+      polled += step;
+      document.getElementById('polled').textContent = polled.toLocaleString();
+      await sleep(50);
+      for (let j = i; j < i + step && j < cells.length; j++) {
+        cells[j].classList.remove('scanning');
+      }
+    }
+
+    // sample synthetic results — 0-2 changes per cycle (mostly zero, matching reality)
+    const detected = Math.random() < 0.4 ? Math.floor(Math.random() * 3) : 0;
+    addLog('RX', `RE API returned data[${detected}] · resultCount=${detected} · status 200 · 0 credits`);
+
+    if (detected === 0) {
+      mode.textContent = '▸ NO_CHANGES_DETECTED';
+      pulse.innerHTML = 'all 10,000 tracked IDs hold baseline · cycle complete';
+      addLog('OK', 'no NET_NEW changes · run status=completed · 0 events emitted');
+    } else {
+      mode.textContent = '▸ CHANGES_DETECTED';
+      addLog('HIT', `${detected} property_id(s) matched pre_foreclosure:true · validating change guard`);
+      for (let k = 0; k < detected; k++) {
+        // pick random cell, light amber → red
+        const idx = Math.floor(Math.random() * cells.length);
+        cells[idx].classList.add('hit');
+        await sleep(180);
+        changes += 1;
+        document.getElementById('changes').textContent = changes.toLocaleString();
+        const pid = (1_000_000_000 + Math.floor(Math.random() * 900_000_000)).toString();
+        addLog('SIG', `property_id=${pid} · field=pre_foreclosure · previous=false · current=true`);
+        await sleep(120);
+        addLog('LIN', `lead_id=NULL · lineage NULL · backfill_eligible=true (no Properties materialization yet)`);
+        await sleep(80);
+        const dayKey = new Date().toISOString().slice(0,10);
+        addLog('WRT', `INSERT signal_events · idempotency=nnp:sb_…demo01:${pid}:pre_foreclosure:${dayKey}`);
+        cells[idx].classList.remove('hit');
+        cells[idx].classList.add('signal');
+        bump('events', 1);
+        await sleep(120);
+      }
+      addLog('OK', `cycle ${cycle} complete · run status=completed · ${detected} events emitted`);
+    }
+
+    mode.textContent = '▸ IDLE · awaiting next tick';
+    pulse.innerHTML = `next poll in ~24h · UI demo accelerated for visibility`;
+    await sleep(2400);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // initial pause so user reads
+  setTimeout(async () => {
+    while (true) {
+      await runCycle();
+    }
+  }, 600);
+</script>
+
+</body>
+</html>
