@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>RUFUS · Cron Captain · Pixel View</title>
+<title>LUCI · MCP Intelligence Orchestrator · Pixel View</title>
 <style>
   :root {
     --bg: #050803;
@@ -191,6 +191,7 @@
     transform-style: preserve-3d;
     left: 50%; top: 50%;
   }
+  /* Default face (overridden per-part) */
   .rf {
     position: absolute; left: 0; top: 0;
     background: var(--phosphor);
@@ -198,23 +199,25 @@
     box-shadow: inset 0 0 8px rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.35);
   }
 
-  /* HEAD STUD (small cylinder-cube on top) */
+  /* HEAD STUD — LEGO yellow cylinder peg on top of head */
+  .r-stud .rf { background: #ffcc1a; border-color: #8a6a00; box-shadow: inset 0 0 6px rgba(255,255,255,0.4), inset 0 -3px 6px rgba(0,0,0,0.4); }
   .r-stud { width: 18px; height: 12px; margin: -134px 0 0 -9px; }
   .r-stud .rf.front  { width: 18px; height: 12px; transform: translateZ(9px); }
   .r-stud .rf.back   { width: 18px; height: 12px; transform: rotateY(180deg) translateZ(9px); }
   .r-stud .rf.left   { width: 18px; height: 12px; transform: rotateY(-90deg) translateZ(9px); }
   .r-stud .rf.right  { width: 18px; height: 12px; transform: rotateY(90deg)  translateZ(9px); }
-  .r-stud .rf.top    { width: 18px; height: 18px; transform: rotateX(90deg)  translateZ(6px); background: #5cff9f; }
-  .r-stud .rf.bottom { width: 18px; height: 18px; transform: rotateX(-90deg) translateZ(6px); }
+  .r-stud .rf.top    { width: 18px; height: 18px; transform: rotateX(90deg)  translateZ(6px); background: #ffe066; border-color: #8a6a00; }
+  .r-stud .rf.bottom { width: 18px; height: 18px; transform: rotateX(-90deg) translateZ(6px); background: #ffcc1a; }
 
-  /* HEAD CUBE */
+  /* HEAD CUBE — LEGO yellow */
+  .r-head .rf { background: #ffcc1a; border-color: #8a6a00; box-shadow: inset 0 0 10px rgba(255,255,255,0.35), inset 0 -6px 14px rgba(120,80,0,0.5); }
   .r-head { width: 52px; height: 52px; margin: -122px 0 0 -26px; }
   .r-head .rf.front  { width: 52px; height: 52px; transform: translateZ(26px); }
   .r-head .rf.back   { width: 52px; height: 52px; transform: rotateY(180deg) translateZ(26px); }
-  .r-head .rf.left   { width: 52px; height: 52px; transform: rotateY(-90deg) translateZ(26px); }
-  .r-head .rf.right  { width: 52px; height: 52px; transform: rotateY(90deg)  translateZ(26px); }
-  .r-head .rf.top    { width: 52px; height: 52px; transform: rotateX(90deg)  translateZ(26px); }
-  .r-head .rf.bottom { width: 52px; height: 52px; transform: rotateX(-90deg) translateZ(26px); }
+  .r-head .rf.left   { width: 52px; height: 52px; transform: rotateY(-90deg) translateZ(26px); background: #e6b300; }
+  .r-head .rf.right  { width: 52px; height: 52px; transform: rotateY(90deg)  translateZ(26px); background: #e6b300; }
+  .r-head .rf.top    { width: 52px; height: 52px; transform: rotateX(90deg)  translateZ(26px); background: #ffe066; }
+  .r-head .rf.bottom { width: 52px; height: 52px; transform: rotateX(-90deg) translateZ(26px); background: #c99500; }
 
   /* Friendly face on the FRONT of head */
   .r-face {
@@ -240,7 +243,8 @@
     border-radius: 0 0 14px 14px;
   }
 
-  /* NECK */
+  /* NECK — dark black */
+  .r-neck .rf { background: #1a1f1c; border-color: #000; box-shadow: inset 0 0 4px rgba(46,255,122,0.15); }
   .r-neck { width: 18px; height: 6px; margin: -69px 0 0 -9px; }
   .r-neck .rf.front  { width: 18px; height: 6px; transform: translateZ(9px); }
   .r-neck .rf.back   { width: 18px; height: 6px; transform: rotateY(180deg) translateZ(9px); }
@@ -249,30 +253,34 @@
   .r-neck .rf.top    { width: 18px; height: 18px; transform: rotateX(90deg)  translateZ(3px); }
   .r-neck .rf.bottom { width: 18px; height: 18px; transform: rotateX(-90deg) translateZ(3px); }
 
-  /* TORSO */
+  /* TORSO — black with green N */
+  .r-torso .rf { background: #1a1f1c; border-color: #000; box-shadow: inset 0 0 12px rgba(46,255,122,0.10), inset 0 -8px 16px rgba(0,0,0,0.6); }
   .r-torso { width: 70px; height: 80px; margin: -60px 0 0 -35px; }
-  .r-torso .rf.front  { width: 70px; height: 80px; transform: translateZ(20px); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; }
-  .r-torso .rf.back   { width: 70px; height: 80px; transform: rotateY(180deg) translateZ(20px); }
-  .r-torso .rf.left   { width: 40px; height: 80px; transform: rotateY(-90deg) translateZ(35px); }
-  .r-torso .rf.right  { width: 40px; height: 80px; transform: rotateY(90deg)  translateZ(35px); }
-  .r-torso .rf.top    { width: 70px; height: 40px; transform: rotateX(90deg)  translateZ(40px); }
-  .r-torso .rf.bottom { width: 70px; height: 40px; transform: rotateX(-90deg) translateZ(40px); }
+  .r-torso .rf.front  { width: 70px; height: 80px; transform: translateZ(20px); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
+  .r-torso .rf.back   { width: 70px; height: 80px; transform: rotateY(180deg) translateZ(20px); background: #131613; }
+  .r-torso .rf.left   { width: 40px; height: 80px; transform: rotateY(-90deg) translateZ(35px); background: #0e120f; }
+  .r-torso .rf.right  { width: 40px; height: 80px; transform: rotateY(90deg)  translateZ(35px); background: #0e120f; }
+  .r-torso .rf.top    { width: 70px; height: 40px; transform: rotateX(90deg)  translateZ(40px); background: #232924; }
+  .r-torso .rf.bottom { width: 70px; height: 40px; transform: rotateX(-90deg) translateZ(40px); background: #0a0c0a; }
   .r-name {
     font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.20em;
-    color: #062012;
-    font-weight: 700;
-    text-shadow: 0 0 2px rgba(255,255,255,0.4);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0;
+    color: var(--phosphor);
+    text-shadow: 0 0 8px var(--phosphor), 0 0 14px rgba(46,255,122,0.5);
+    line-height: 1;
   }
-  .r-studs { display: flex; gap: 6px; }
+  .r-studs { display: flex; gap: 5px; }
   .r-studs span {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #b8ffd1, #0a4d24);
-    box-shadow: 0 0 3px rgba(0,0,0,0.4);
+    width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #b8ffd1, #16ff8c);
+    box-shadow: 0 0 4px var(--phosphor);
   }
 
-  /* ARMS */
+  /* ARMS — black with green hands */
+  .r-arm .rf { background: #1a1f1c; border-color: #000; box-shadow: inset 0 0 6px rgba(46,255,122,0.10), inset 0 -3px 8px rgba(0,0,0,0.5); }
+  .r-arm .rf.bottom { background: var(--phosphor); box-shadow: 0 0 4px var(--phosphor); }
   .r-arm { width: 14px; height: 60px; }
   .r-arm-left  { margin: -52px 0 0 -49px; transform: rotateZ(-6deg); }
   .r-arm-right { margin: -52px 0 0  35px; transform: rotateZ(6deg); }
@@ -283,7 +291,9 @@
   .r-arm .rf.top    { width: 14px; height: 14px; transform: rotateX(90deg)  translateZ(30px); }
   .r-arm .rf.bottom { width: 14px; height: 14px; transform: rotateX(-90deg) translateZ(30px); }
 
-  /* LEGS */
+  /* LEGS — black with bright green stud-tops */
+  .r-leg .rf { background: #1a1f1c; border-color: #000; box-shadow: inset 0 0 8px rgba(46,255,122,0.08), inset 0 -6px 14px rgba(0,0,0,0.6); }
+  .r-leg .rf.top { background: var(--phosphor); box-shadow: 0 0 6px var(--phosphor); }
   .r-leg { width: 28px; height: 70px; }
   .r-leg-left  { margin: 20px 0 0 -30px; }
   .r-leg-right { margin: 20px 0 0   2px; }
@@ -478,8 +488,8 @@
 
 <header>
   <div>
-    <div class="title">▰ RUFUS · CRON CAPTAIN ▰</div>
-    <div class="subtitle">oversees all detection-only crons · IDs-only · 0-credit · never sends · never mutates lead journey</div>
+    <div class="title">▰ LUCI · EVENT SIGNALS &amp; UPDATES ▰</div>
+    <div class="subtitle">signals + updates on existing tracked IDs · IDs-only · 0-credit · detection-only · what changed since last poll</div>
   </div>
   <div style="display:flex; align-items:center;">
     <div class="ind"><span class="dot"></span><span style="color:var(--phosphor); font-size:11px; letter-spacing:0.16em;">ONLINE</span></div>
@@ -537,7 +547,10 @@
   <section class="panel">
     <h2>▸ AGENT WATCH STAGE</h2>
     <div class="stage">
-      <div class="agent-label">[ RUFUS · CRON CAPTAIN · ON DUTY ]</div>
+      <div class="agent-label">[ LUCI · MCP INTELLIGENCE ORCHESTRATOR · ON DUTY ]</div>
+      <div style="font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:0.10em; margin-bottom:8px;">
+        sub-agents · rufus (RealEstateAPI crons) · signal_events writer · idempotency keeper
+      </div>
       <div class="rufus-stage">
         <div class="rufus-3d">
           <!-- HEAD STUD -->
@@ -569,7 +582,7 @@
           </div>
           <!-- TORSO -->
           <div class="r-part r-torso">
-            <div class="rf front"><div class="r-name">RUFUS</div><div class="r-studs"><span></span><span></span><span></span></div></div>
+            <div class="rf front"><div class="r-name">N</div><div class="r-studs"><span></span><span></span><span></span></div></div>
             <div class="rf back"></div>
             <div class="rf left"></div>
             <div class="rf right"></div>
@@ -706,7 +719,8 @@
   const pulse = document.getElementById('pulse-text');
 
   // seed boot logs
-  addLog('INFO', 'rufus boot · cron captain online · canon v2-net-new-poll · detection-only');
+  addLog('INFO', 'luci boot · MCP intelligence orchestrator online · event signals + updates on tracked IDs');
+  addLog('INFO', 'sub-agent rufus ready · v2-net-new-poll cron · IDs-only · 0-credit · detection-only');
   addLog('AUTH', 'REAPI key resolved · tenant=ehoa · 0-credit pattern');
   addLog('INFO', 'signal_block sb_…demo01 · 10,000 tracked IDs loaded');
 
