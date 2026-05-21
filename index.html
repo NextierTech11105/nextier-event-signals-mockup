@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Event Signals & Updates — Initial SMS Block Signal Monitor — Nextier</title>
+<title>Event Signals & Updates — Initial SMS Block Signal Monitor — Nextier (Public Demo)</title>
+<meta name="description" content="Nextier Event Signals & Updates dashboard mockup — dark trading terminal style. Static public demo with mock data only." />
 <style>
   :root {
     --bg: #050608;
@@ -34,6 +35,21 @@
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; }
   body { display: flex; min-height: 100vh; }
 
+  /* ───────────────────── DEMO BANNER ───────────────────── */
+  .demo-banner {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: repeating-linear-gradient(45deg, rgba(245,183,64,0.10) 0 12px, rgba(245,183,64,0.04) 12px 24px);
+    border-bottom: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 6px 16px;
+    text-align: center;
+    z-index: 100;
+  }
+  body { padding-top: 30px; }
+
   /* ───────────────────── SIDEBAR ───────────────────── */
   aside {
     width: 220px;
@@ -42,8 +58,8 @@
     border-right: 1px solid var(--border);
     padding: 16px 0;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: 30px;
+    height: calc(100vh - 30px);
     overflow-y: auto;
   }
   .brand {
@@ -81,9 +97,7 @@
     padding: 1px 6px; border-radius: 3px;
     background: var(--panel-3); color: var(--text-dim);
   }
-  .nav-item.active .badge {
-    background: rgba(22,255,140,0.16); color: var(--green);
-  }
+  .nav-item.active .badge { background: rgba(22,255,140,0.16); color: var(--green); }
 
   /* ───────────────────── MAIN ───────────────────── */
   main { flex: 1; min-width: 0; padding: 16px 20px 60px; }
@@ -100,28 +114,23 @@
   }
   .top-header h1 .pill {
     margin-left: 10px; font-size: 10px; padding: 3px 8px; border-radius: 3px;
-    background: var(--green-bg); color: var(--green); border: 1px solid var(--green-dim);
-    font-family: var(--mono); letter-spacing: 0.06em;
-    vertical-align: 2px;
+    background: var(--gold-bg); color: var(--gold); border: 1px solid var(--gold-dim);
+    font-family: var(--mono); letter-spacing: 0.06em; vertical-align: 2px;
   }
   .top-header .subtitle {
     font-size: 11px; color: var(--text-dim);
     font-family: var(--mono); letter-spacing: 0.04em;
   }
-  .top-header .status-block {
-    display: flex; align-items: center; gap: 16px;
-  }
-  .status-block .heartbeat {
+  .top-header .status-block { display: flex; align-items: center; gap: 16px; }
+  .top-header .status-block .heartbeat {
     display: flex; align-items: center; gap: 6px;
-    font-family: var(--mono); font-size: 11px; color: var(--green);
+    font-family: var(--mono); font-size: 11px; color: var(--gold);
   }
   .heartbeat::before {
-    content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green);
-    box-shadow: 0 0 10px var(--green);
-    animation: pulse 1.6s ease-in-out infinite;
+    content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--gold);
+    box-shadow: 0 0 10px var(--gold); animation: pulse 1.6s ease-in-out infinite;
   }
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
-
   .no-autosend {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 4px 10px; border-radius: 3px;
@@ -143,9 +152,7 @@
   .block-card .name {
     font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px;
   }
-  .block-card .tags {
-    display: flex; flex-wrap: wrap; gap: 6px;
-  }
+  .block-card .tags { display: flex; flex-wrap: wrap; gap: 6px; }
   .tag {
     font-family: var(--mono); font-size: 10.5px;
     padding: 2px 8px; border-radius: 3px;
@@ -153,8 +160,8 @@
     color: var(--text-dim); letter-spacing: 0.04em;
   }
   .tag.green { color: var(--green); border-color: var(--green-dim); background: var(--green-bg); }
-  .tag.blue  { color: var(--blue); border-color: var(--blue-dim); background: var(--blue-bg); }
-  .tag.gold  { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-bg); }
+  .tag.blue  { color: var(--blue);  border-color: var(--blue-dim);  background: var(--blue-bg); }
+  .tag.gold  { color: var(--gold);  border-color: var(--gold-dim);  background: var(--gold-bg); }
   .tag.purple{ color: var(--purple); border-color: var(--purple-dim); background: var(--purple-bg); }
 
   .block-card .ids {
@@ -179,16 +186,13 @@
     color: var(--text-muted); margin-bottom: 4px;
   }
   .counter .value {
-    font-family: var(--mono); font-size: 22px; font-weight: 600;
-    color: var(--text);
+    font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--text);
   }
   .counter.green .value { color: var(--green); }
   .counter.blue .value  { color: var(--blue); }
   .counter.gold .value  { color: var(--gold); }
   .counter.purple .value{ color: var(--purple); }
-  .counter .sub {
-    font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 2px;
-  }
+  .counter .sub { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 
   /* ───────────────────── METRIC STRIP ───────────────────── */
   .metric-strip {
@@ -236,24 +240,17 @@
     color: var(--text-dim);
   }
   .stage.active { color: var(--green); border-color: var(--green-dim); background: var(--green-bg); box-shadow: inset 0 0 10px rgba(22,255,140,0.06); }
-  .stage.warn   { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-bg); }
-  .stage.blue   { color: var(--blue); border-color: var(--blue-dim); background: var(--blue-bg); }
+  .stage.warn   { color: var(--gold);   border-color: var(--gold-dim);   background: var(--gold-bg); }
+  .stage.blue   { color: var(--blue);   border-color: var(--blue-dim);   background: var(--blue-bg); }
   .stage.purple { color: var(--purple); border-color: var(--purple-dim); background: var(--purple-bg); }
   .stage .num { display: block; font-size: 9px; color: var(--text-muted); letter-spacing: 0.10em; margin-bottom: 4px; }
   .stage .label { display: block; font-weight: 600; letter-spacing: 0.03em; }
-  .arrow {
-    width: 22px; flex: 0 0 22px; text-align: center;
-    color: var(--text-muted);
-    font-family: var(--mono);
-  }
+  .arrow { width: 22px; flex: 0 0 22px; text-align: center; color: var(--text-muted); font-family: var(--mono); }
 
-  /* ───────────────────── BODY ROW (table + right panel) ───────────────────── */
+  /* ───────────────────── BODY ROW ───────────────────── */
   .body-row { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-bottom: 14px; }
 
-  /* tabs */
-  .tabs {
-    display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
-  }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
   .tab {
     padding: 8px 14px;
     font-size: 12px;
@@ -262,14 +259,10 @@
     border-bottom: 2px solid transparent;
     font-family: var(--mono); letter-spacing: 0.02em;
   }
-  .tab.active {
-    color: var(--green);
-    border-bottom-color: var(--green);
-  }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
   .tab .count { font-size: 10px; margin-left: 4px; padding: 1px 6px; border-radius: 2px; background: var(--panel-3); color: var(--text-dim); }
   .tab.active .count { background: rgba(22,255,140,0.16); color: var(--green); }
 
-  /* table */
   .table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
   table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
   thead th {
@@ -291,41 +284,38 @@
   }
   tbody tr:hover td { background: rgba(255,255,255,0.015); }
   td.dim { color: var(--text-dim); }
-  td.green { color: var(--green); }
-  td.blue  { color: var(--blue); }
-  td.gold  { color: var(--gold); }
-  td.purple { color: var(--purple); }
-  td.red   { color: var(--red); }
 
-  .priority-dot {
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+  /* ───────────────────── EMPTY STATE ───────────────────── */
+  .empty-state {
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--text-dim);
+    font-family: var(--mono);
   }
-  .priority-dot.high { background: var(--red); box-shadow: 0 0 6px var(--red); }
-  .priority-dot.med  { background: var(--gold); }
-  .priority-dot.low  { background: var(--text-muted); }
-
-  .chip {
-    display: inline-block; padding: 1px 6px; border-radius: 3px;
-    font-size: 10px; letter-spacing: 0.04em;
+  .empty-state .icon {
+    font-size: 28px; color: var(--gold); margin-bottom: 12px;
+    font-family: var(--mono);
   }
-  .chip.green  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-dim); }
-  .chip.blue   { background: var(--blue-bg);  color: var(--blue);  border: 1px solid var(--blue-dim); }
-  .chip.gold   { background: var(--gold-bg);  color: var(--gold);  border: 1px solid var(--gold-dim); }
-  .chip.purple { background: var(--purple-bg);color: var(--purple);border: 1px solid var(--purple-dim); }
-  .chip.red    { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red); }
-  .chip.dim    { background: var(--panel-3);  color: var(--text-dim); border: 1px solid var(--border-strong); }
-
-  .row-btn {
-    font-family: var(--mono); font-size: 10px;
-    padding: 3px 8px; border-radius: 3px;
-    background: transparent; color: var(--blue); border: 1px solid var(--blue-dim);
-    cursor: pointer; letter-spacing: 0.04em;
+  .empty-state .title {
+    font-size: 13px; color: var(--text); letter-spacing: 0.06em; margin-bottom: 6px;
   }
-  .row-btn:hover { background: var(--blue-bg); }
-  .row-btn.gold  { color: var(--gold); border-color: var(--gold-dim); }
-  .row-btn.gold:hover { background: var(--gold-bg); }
-  .row-btn.purple{ color: var(--purple); border-color: var(--purple-dim); }
-  .row-btn.purple:hover { background: var(--purple-bg); }
+  .empty-state .sub {
+    font-size: 11px; color: var(--text-dim); margin-bottom: 16px;
+  }
+  .empty-state .diagnostics {
+    display: inline-block;
+    text-align: left;
+    background: var(--panel-2);
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .empty-state .diagnostics .k { color: var(--text-muted); }
+  .empty-state .diagnostics .v { color: var(--text); margin-left: 6px; }
+  .empty-state .diagnostics .v.gold { color: var(--gold); }
+  .empty-state .diagnostics .v.red  { color: var(--red); }
 
   /* ───────────────────── RIGHT PANEL ───────────────────── */
   .right-panel { display: flex; flex-direction: column; gap: 12px; }
@@ -375,15 +365,24 @@
   .lineage-row .v { color: var(--text); }
   .lineage-row .v.gold { color: var(--gold); }
   .lineage-row .v.green { color: var(--green); }
+  .lineage-row .v.red { color: var(--red); }
 
   .run-line { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-family: var(--mono); font-size: 11px; border-bottom: 1px dashed var(--border); }
   .run-line:last-child { border-bottom: 0; }
+  .run-line .v.gold { color: var(--gold); }
+  .run-line .v.red  { color: var(--red); }
+  .run-line .v.green{ color: var(--green); }
 
-  .bar-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-family: var(--mono); font-size: 11px; }
-  .bar-row .lbl { flex: 0 0 165px; color: var(--text-dim); font-size: 10.5px; letter-spacing: 0.04em; }
-  .bar-row .bar { flex: 1; height: 6px; background: var(--panel-3); border-radius: 3px; overflow: hidden; }
-  .bar-row .bar > span { display: block; height: 100%; }
-  .bar-row .num { flex: 0 0 28px; text-align: right; color: var(--text); }
+  .chip {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 10px; letter-spacing: 0.04em;
+  }
+  .chip.green  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-dim); }
+  .chip.blue   { background: var(--blue-bg);  color: var(--blue);  border: 1px solid var(--blue-dim); }
+  .chip.gold   { background: var(--gold-bg);  color: var(--gold);  border: 1px solid var(--gold-dim); }
+  .chip.purple { background: var(--purple-bg);color: var(--purple);border: 1px solid var(--purple-dim); }
+  .chip.red    { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red); }
+  .chip.dim    { background: var(--panel-3);  color: var(--text-dim); border: 1px solid var(--border-strong); }
 
   /* ───────────────────── FOOTER NOTE ───────────────────── */
   .footer-note {
@@ -395,6 +394,8 @@
 </style>
 </head>
 <body>
+
+<div class="demo-banner">STATIC PUBLIC DEMO · MOCK DATA ONLY · NOT A LIVE PRODUCTION DASHBOARD</div>
 
 <!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
 <aside>
@@ -408,7 +409,7 @@
     <div class="nav-item">MCP Pipeline Terminal</div>
     <div class="nav-item">Properties</div>
     <div class="nav-item">Initial SMS Launch</div>
-    <div class="nav-item active">Event Signals &amp; Updates <span class="badge">LIVE</span></div>
+    <div class="nav-item active">Event Signals &amp; Updates <span class="badge">DEMO</span></div>
     <div class="nav-item">Nudge Workspace</div>
     <div class="nav-item">Inbound Factory</div>
     <div class="nav-item">Contact Center</div>
@@ -421,7 +422,7 @@
   </div>
   <div class="nav-section">
     <div class="nav-label">Workspace</div>
-    <div class="nav-item">EHO Advisor <span class="badge">EHOA</span></div>
+    <div class="nav-item">Demo Workspace <span class="badge">SAMPLE</span></div>
   </div>
 </aside>
 
@@ -431,11 +432,11 @@
   <!-- TOP HEADER -->
   <div class="top-header">
     <div>
-      <h1>Event Signals &amp; Updates <span class="pill">LIVE MONITOR</span></h1>
+      <h1>Event Signals &amp; Updates <span class="pill">DIAGNOSTIC DEMO</span></h1>
       <div class="subtitle">Initial SMS Block Signal Monitor · changes detected, classified, prioritized, and routed</div>
     </div>
     <div class="status-block">
-      <div class="heartbeat">SIGNAL_EVENTS HEARTBEAT · 0 last hour</div>
+      <div class="heartbeat">SIGNAL_EVENTS SILENT · diagnostic example state</div>
       <div class="no-autosend">NO AUTO-SEND</div>
     </div>
   </div>
@@ -444,21 +445,21 @@
   <div class="block-card">
     <div class="row1">
       <div>
-        <div class="name">Initial SMS Block · Suffolk Estate · Non-Distress · 2026-05-07 Sub Block</div>
+        <div class="name">Initial SMS Block · Demo Region · Sample-Estate · Demo Sub Block</div>
         <div class="tags">
           <span class="tag green">READY_FOR_SMS</span>
           <span class="tag gold">review required</span>
-          <span class="tag">EHOA</span>
-          <span class="tag">SUFFOLK · NY</span>
+          <span class="tag">DEMO TENANT</span>
+          <span class="tag">SAMPLE COUNTY · ST</span>
           <span class="tag">ESTATE</span>
           <span class="tag">NON-DISTRESS</span>
           <span class="tag blue">rail · signalhouse</span>
-          <span class="tag purple">operator · Sabrina</span>
+          <span class="tag purple">operator · Sample</span>
         </div>
       </div>
       <div class="ids">
-        <div>campaign_block_id <strong>cblk_ny_suffolk_estate_non_distress_20260510_28</strong></div>
-        <div>main_inception_pool_id <strong>sb_533b702e9d1b4b5382</strong></div>
+        <div>campaign_block_id <strong>cblk_demo_estate_non_distress_YYYYMMDD_XX</strong></div>
+        <div>main_inception_pool_id <strong>sb_demo_xxxxxxxxxxxxx</strong></div>
         <div>signal_type <strong>Estate-Non-Distress</strong></div>
         <div>workspace <strong>real_estate_api</strong></div>
       </div>
@@ -472,7 +473,7 @@
       <div class="counter green">
         <div class="label">MOBILE_CONNECTED</div>
         <div class="value">0</div>
-        <div class="sub">candidates: 1,596</div>
+        <div class="sub">candidates pending</div>
       </div>
       <div class="counter gold">
         <div class="label">OPPT</div>
@@ -494,12 +495,12 @@
 
   <!-- METRIC STRIP -->
   <div class="metric-strip">
-    <div class="metric"><div class="label">Tracked IDs</div><div class="value">25,781</div><div class="delta">pool · sb_533b…b5382</div></div>
+    <div class="metric"><div class="label">Tracked IDs</div><div class="value">10,000</div><div class="delta">demo cohort size</div></div>
     <div class="metric blue"><div class="label">Delivered Mobiles</div><div class="value">0</div><div class="delta">SignalHouse truth</div></div>
-    <div class="metric gold"><div class="label">Detected Changes</div><div class="value">7</div><div class="delta">last 24h · 10K ids polled</div></div>
-    <div class="metric green"><div class="label">signal_events Written</div><div class="value">7</div><div class="delta">idempotency · 0 dup</div></div>
-    <div class="metric gold"><div class="label">OPPT</div><div class="value">0</div><div class="delta">awaiting reply</div></div>
-    <div class="metric purple"><div class="label">APPT</div><div class="value">0</div><div class="delta">→ Focus Calendar</div></div>
+    <div class="metric gold"><div class="label">Detected Changes</div><div class="value">0</div><div class="delta">latest poll · status partial</div></div>
+    <div class="metric gold"><div class="label">signal_events Written</div><div class="value">0</div><div class="delta">last write 21d ago</div></div>
+    <div class="metric"><div class="label">OPPT</div><div class="value">0</div><div class="delta">no replies yet</div></div>
+    <div class="metric"><div class="label">APPT</div><div class="value">0</div><div class="delta">→ Focus Calendar</div></div>
   </div>
 
   <!-- PIPELINE VISUAL -->
@@ -529,121 +530,36 @@
     </div>
   </div>
 
-  <!-- BODY ROW: tabs + table + right panel -->
+  <!-- BODY ROW -->
   <div class="body-row">
     <div>
       <div class="tabs">
-        <div class="tab active">Overview <span class="count">7</span></div>
-        <div class="tab">Detected Changes <span class="count">7</span></div>
+        <div class="tab active">Overview <span class="count">0</span></div>
+        <div class="tab">Detected Changes <span class="count">0</span></div>
         <div class="tab">OPPT / Replies <span class="count">0</span></div>
         <div class="tab">No Response Signals <span class="count">0</span></div>
-        <div class="tab">Lineage <span class="count">7</span></div>
-        <div class="tab">Runs <span class="count">14</span></div>
-        <div class="tab">Errors <span class="count">0</span></div>
+        <div class="tab">Lineage <span class="count">0</span></div>
+        <div class="tab">Runs <span class="count">10</span></div>
+        <div class="tab">Errors <span class="count">2</span></div>
       </div>
       <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Signal Time</th>
-              <th>Property ID</th>
-              <th>Address</th>
-              <th>Signal Type</th>
-              <th>Old → New</th>
-              <th>Lead</th>
-              <th>Lineage</th>
-              <th>Priority</th>
-              <th>Recommended Route</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="dim">12:45:03</td>
-              <td class="blue">1000160972</td>
-              <td>148 Smith Ave, Holbrook NY 11741</td>
-              <td class="gold">NET_NEW_PRE_FORECLOSURE</td>
-              <td><span class="chip dim">false</span> → <span class="chip gold">true</span></td>
-              <td class="dim">— no lead</td>
-              <td><span class="chip gold">Null Lineage</span> <span class="chip dim">Backfill Eligible</span></td>
-              <td><span class="priority-dot high"></span><span class="red">HIGH</span></td>
-              <td class="purple">→ Initial SMS Launch · re-prep</td>
-              <td><button class="row-btn gold">Approve Route</button></td>
-            </tr>
-            <tr>
-              <td class="dim">12:45:03</td>
-              <td class="blue">100026673</td>
-              <td>22 Elm Rd, Babylon NY 11702</td>
-              <td class="gold">NET_NEW_AUCTION</td>
-              <td><span class="chip dim">false</span> → <span class="chip gold">true</span></td>
-              <td class="dim">— no lead</td>
-              <td><span class="chip gold">Null Lineage</span> <span class="chip dim">Backfill Eligible</span></td>
-              <td><span class="priority-dot high"></span><span class="red">HIGH</span></td>
-              <td class="purple">→ Initial SMS Launch · escalate</td>
-              <td><button class="row-btn gold">Approve Route</button></td>
-            </tr>
-            <tr>
-              <td class="dim">12:45:02</td>
-              <td class="blue">100165222</td>
-              <td>9 Birch Ln, Patchogue NY 11772</td>
-              <td>NET_NEW_MLS_LISTED</td>
-              <td><span class="chip dim">false</span> → <span class="chip blue">true</span></td>
-              <td class="dim">— no lead</td>
-              <td><span class="chip gold">Null Lineage</span></td>
-              <td><span class="priority-dot med"></span><span class="gold">MED</span></td>
-              <td>→ Watchlist (treat as lost while listed)</td>
-              <td><button class="row-btn">Acknowledge</button></td>
-            </tr>
-            <tr>
-              <td class="dim">12:45:02</td>
-              <td class="blue">10058391</td>
-              <td>312 Cedar St, Bay Shore NY 11706</td>
-              <td>NET_NEW_VACANT</td>
-              <td><span class="chip dim">false</span> → <span class="chip blue">true</span></td>
-              <td class="green">lead_01J… Maharaj</td>
-              <td><span class="chip green">Linked</span> <span class="chip blue">cblk_…_28</span></td>
-              <td><span class="priority-dot med"></span><span class="gold">MED</span></td>
-              <td class="purple">→ Nudge Workspace</td>
-              <td><button class="row-btn purple">Approve Route</button></td>
-            </tr>
-            <tr>
-              <td class="dim">12:45:02</td>
-              <td class="blue">10070489</td>
-              <td>77 Maple Dr, Riverhead NY 11901</td>
-              <td>NET_NEW_ABSENTEE</td>
-              <td><span class="chip dim">false</span> → <span class="chip blue">true</span></td>
-              <td class="dim">— no lead</td>
-              <td><span class="chip gold">Null Lineage</span></td>
-              <td><span class="priority-dot low"></span><span class="dim">LOW</span></td>
-              <td>→ Inception Pool · enrich next cycle</td>
-              <td><button class="row-btn">Acknowledge</button></td>
-            </tr>
-            <tr>
-              <td class="dim">11:18:44</td>
-              <td class="blue">9947002</td>
-              <td>411 Oak Way, Huntington NY 11743</td>
-              <td>OPPT_REPLY_DETECTED</td>
-              <td><span class="chip dim">unread</span> → <span class="chip green">replied</span></td>
-              <td class="green">lead_01J… O'Connor</td>
-              <td><span class="chip green">Linked</span></td>
-              <td><span class="priority-dot high"></span><span class="red">HIGH</span></td>
-              <td class="purple">→ Contact Center + Focus Calendar</td>
-              <td><button class="row-btn purple">Approve Route</button></td>
-            </tr>
-            <tr>
-              <td class="dim">11:18:44</td>
-              <td class="blue">9959820</td>
-              <td>56 Pine Ct, Smithtown NY 11787</td>
-              <td class="red">SUPPRESSION · STOP</td>
-              <td><span class="chip dim">contactable</span> → <span class="chip red">opted_out</span></td>
-              <td class="green">lead_01J… Pellegrini</td>
-              <td><span class="chip green">Linked</span></td>
-              <td><span class="priority-dot high"></span><span class="red">COMPLIANCE</span></td>
-              <td class="red">→ Outbound Gate · permanent block</td>
-              <td><button class="row-btn gold">Auto-Applied</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="empty-state">
+          <div class="icon">⏸</div>
+          <div class="title">No signal_events written for this block yet</div>
+          <div class="sub">Current Production Diagnostic Example · zero-state shape · awaiting next successful poll</div>
+          <div class="diagnostics">
+            <div><span class="k">signal_events total rows (table-wide)</span><span class="v">3,417</span></div>
+            <div><span class="k">rows with team_id populated</span><span class="v red">0</span> <span class="chip gold">pre-migration backfill</span></div>
+            <div><span class="k">last signal_events write</span><span class="v gold">21 days ago</span></div>
+            <div><span class="k">latest poll status</span><span class="v gold">partial</span></div>
+            <div><span class="k">count_after / ids_found / ids_changed</span><span class="v">0 / 0 / 0</span></div>
+            <div><span class="k">poll runs in last 7 days</span><span class="v">10</span></div>
+            <div><span class="k">canonical RE API path</span><span class="v">POST /v2/PropertySearch · ids_only:true · 0 credits</span></div>
+            <div><span class="k">idempotency key shape</span><span class="v">nnp:&lt;block_id&gt;:&lt;property_id&gt;:&lt;field&gt;:&lt;date&gt;</span></div>
+            <div><span class="k">duplicate prevention</span><span class="v green">ON CONFLICT (idempotency_key) DO NOTHING</span></div>
+            <div><span class="k">lineage when no lead</span><span class="v gold">Null Lineage · Backfill Eligible</span></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -685,11 +601,11 @@
       <div class="panel-card">
         <h4>Operator Approval</h4>
         <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px; font-family:var(--mono);">
-          7 signals · 2 HIGH · 3 Null Lineage · 1 Compliance auto-applied.
+          0 signals pending. Last poll returned no detected changes. Operator-initiated actions available below.
         </div>
-        <button class="approval-btn gold">Approve 3 Null-Lineage Routes</button>
-        <button class="approval-btn">Approve 2 Linked Routes</button>
-        <button class="approval-btn purple">Send to Focus Calendar (1)</button>
+        <button class="approval-btn muted">Approve Null-Lineage Routes (0)</button>
+        <button class="approval-btn muted">Approve Linked Routes (0)</button>
+        <button class="approval-btn muted">Send to Focus Calendar (0)</button>
         <button class="approval-btn muted">Auto-Send (Blocked)</button>
         <div class="approval-note">No Auto-Send · Operator Approval Required · SUPER_ADMIN gate enforced</div>
       </div>
@@ -702,49 +618,61 @@
     <!-- Lineage Truth -->
     <div class="bottom-card">
       <h4>Lineage Truth</h4>
-      <div class="lineage-row"><span class="k">Linked Lineage</span><span class="v green">3 of 7</span></div>
-      <div class="lineage-row"><span class="k">Null Lineage</span><span class="v gold">4 of 7 · Backfill Eligible</span></div>
-      <div class="lineage-row"><span class="k">Lead Linkage Coverage</span><span class="v">42.8%</span></div>
+      <div class="lineage-row"><span class="k">Linked Lineage</span><span class="v">0 of 0</span></div>
+      <div class="lineage-row"><span class="k">Null Lineage</span><span class="v">0 of 0 · Backfill Eligible</span></div>
+      <div class="lineage-row"><span class="k">Lead Linkage Coverage</span><span class="v">—</span></div>
       <div class="lineage-row"><span class="k">Backfill Trigger</span><span class="v">on Properties materialization</span></div>
       <div class="lineage-row"><span class="k">Lineage Authority</span><span class="v">Properties (canonical)</span></div>
-      <div class="lineage-row"><span class="k">MCP Lineage Touch?</span><span class="v" style="color:var(--red);">forbidden</span></div>
+      <div class="lineage-row"><span class="k">MCP Lineage Touch?</span><span class="v red">forbidden</span></div>
     </div>
 
     <!-- Latest Detect Changes Run -->
     <div class="bottom-card">
       <h4>Latest Detect Changes Run</h4>
-      <div class="run-line"><span class="k">Run ID</span><span class="v">spr_lz8q3p · v2-net-new-poll</span></div>
+      <div class="run-line"><span class="k">Run ID</span><span class="v">spr_xxxxxxxx_xxxxxxxx</span></div>
       <div class="run-line"><span class="k">Cadence</span><span class="v"><span class="chip blue">daily</span></span></div>
-      <div class="run-line"><span class="k">Started</span><span class="v">2026-05-20 12:45:01 UTC</span></div>
-      <div class="run-line"><span class="k">Completed</span><span class="v">2026-05-20 12:45:03 UTC · 2.6s</span></div>
+      <div class="run-line"><span class="k">Status</span><span class="v gold">partial</span></div>
       <div class="run-line"><span class="k">Endpoint</span><span class="v">POST /v2/PropertySearch · ids_only:true</span></div>
-      <div class="run-line"><span class="k">IDs Polled</span><span class="v">10,000 · 1 chunk</span></div>
+      <div class="run-line"><span class="k">IDs Polled</span><span class="v">0 · API key error</span></div>
       <div class="run-line"><span class="k">Watched Fields</span><span class="v">pre_foreclosure · auction</span></div>
       <div class="run-line"><span class="k">Credits Used</span><span class="v green">0</span></div>
-      <div class="run-line"><span class="k">Changes Detected</span><span class="v gold">7</span></div>
-      <div class="run-line"><span class="k">signal_events Written</span><span class="v green">7</span></div>
-      <div class="run-line"><span class="k">Duplicates Skipped</span><span class="v">0 (ON CONFLICT idempotency_key)</span></div>
+      <div class="run-line"><span class="k">Changes Detected</span><span class="v">0</span></div>
+      <div class="run-line"><span class="k">signal_events Written</span><span class="v">0</span></div>
+      <div class="run-line"><span class="k">Duplicates Skipped</span><span class="v">0</span></div>
+      <div class="run-line"><span class="k">Error</span><span class="v red">RE API key unset (sample diagnostic)</span></div>
     </div>
 
     <!-- Signal Type Breakdown -->
     <div class="bottom-card">
       <h4>Signal Type Breakdown</h4>
-      <div class="bar-row"><span class="lbl">NET_NEW_PRE_FORECLOSURE</span><span class="bar"><span style="width:30%; background:var(--gold);"></span></span><span class="num">2</span></div>
-      <div class="bar-row"><span class="lbl">NET_NEW_AUCTION</span><span class="bar"><span style="width:15%; background:var(--gold);"></span></span><span class="num">1</span></div>
-      <div class="bar-row"><span class="lbl">NET_NEW_MLS_LISTED</span><span class="bar"><span style="width:15%; background:var(--blue);"></span></span><span class="num">1</span></div>
-      <div class="bar-row"><span class="lbl">NET_NEW_VACANT</span><span class="bar"><span style="width:15%; background:var(--blue);"></span></span><span class="num">1</span></div>
-      <div class="bar-row"><span class="lbl">NET_NEW_ABSENTEE</span><span class="bar"><span style="width:15%; background:var(--blue);"></span></span><span class="num">1</span></div>
-      <div class="bar-row"><span class="lbl">OPPT_REPLY_DETECTED</span><span class="bar"><span style="width:15%; background:var(--green);"></span></span><span class="num">1</span></div>
-      <div class="bar-row"><span class="lbl">SUPPRESSION (STOP)</span><span class="bar"><span style="width:15%; background:var(--red);"></span></span><span class="num">1</span></div>
-      <div style="margin-top:8px; font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:0.04em;">
+      <div style="padding: 14px 0; text-align:center; font-family:var(--mono); font-size:11px; color:var(--text-dim);">
+        No signal_events to break down yet.<br/>
+        Categories tracked when cron resumes writing:
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:10px;">
+        <span class="chip gold">NET_NEW_PRE_FORECLOSURE</span>
+        <span class="chip gold">NET_NEW_AUCTION</span>
+        <span class="chip blue">NET_NEW_MLS_LISTED</span>
+        <span class="chip blue">NET_NEW_VACANT</span>
+        <span class="chip blue">NET_NEW_ABSENTEE</span>
+        <span class="chip green">OPPT_REPLY_DETECTED</span>
+        <span class="chip red">SUPPRESSION (STOP)</span>
+      </div>
+      <div style="margin-top:8px; font-family:var(--mono); font-size:10px; color:var(--text-muted); letter-spacing:0.04em; text-align:center;">
         Idempotency · team_id + source_property_id + signal_kind + old_value + new_value + detected_at(bucketed)
       </div>
     </div>
   </div>
 
   <div class="footer-note">
-    MCP detects · CLI/Worker executes Tracerfy · Properties stores contactability · Initial SMS Launch sends · Event Signals routes.
+    Canon · MCP detects · CLI/Worker executes Tracerfy · Properties stores contactability · Initial SMS Launch sends · Event Signals routes.
     No Auto-Send. PropertyDetail single-ID only. SUPER_ADMIN approval enforced. Operator owns the next click.
+  </div>
+
+  <div style="margin-top:14px; padding:12px 14px; background:var(--panel); border:1px solid var(--border); border-radius:4px; font-family:var(--mono); font-size:10.5px; color:var(--text-muted); text-align:center; letter-spacing:0.04em;">
+    STATIC PUBLIC DEMO · This page does NOT connect to any database or live API.<br/>
+    All identifiers, counts, and timestamps shown are sanitized examples for layout reference only.<br/>
+    Source layout doctrine: dark trading terminal style · neon green active · blue API/data · gold review/null · purple APPT/calendar · red compliance only.
   </div>
 
 </main>
