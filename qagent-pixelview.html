@@ -166,11 +166,47 @@
   /* ═══════════ RUFUS 3D LEGO ═══════════ */
   .rufus-stage {
     width: 100%;
-    height: 320px;
+    height: 340px;
     perspective: 900px;
     perspective-origin: 50% 35%;
     margin-bottom: 14px;
     display: flex; align-items: center; justify-content: center;
+    gap: 50px;
+    position: relative;
+  }
+  .rufus-stage::after {
+    content: "→ dispatch";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--mono); font-size: 9px;
+    color: var(--phosphor);
+    letter-spacing: 0.20em;
+    background: rgba(5,8,3,0.85);
+    border: 1px solid var(--phosphor-dim);
+    padding: 2px 8px;
+    border-radius: 3px;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(46,255,122,0.3);
+    animation: dispatch-pulse 2s ease-in-out infinite;
+  }
+  @keyframes dispatch-pulse {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 1; }
+  }
+  .minifig-col {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .minifig-name {
+    font-family: var(--mono); font-size: 9px;
+    color: var(--phosphor); letter-spacing: 0.18em;
+    text-shadow: 0 0 4px var(--phosphor);
+    margin-bottom: -10px;
+  }
+  .minifig-role {
+    font-family: var(--mono); font-size: 8px;
+    color: var(--text-dim); letter-spacing: 0.14em;
+    margin-top: -6px;
   }
   .rufus-3d {
     position: relative;
@@ -178,6 +214,21 @@
     transform-style: preserve-3d;
     animation: rufus-spin 14s linear infinite, rufus-bob 3.4s ease-in-out infinite;
   }
+  .rufus-3d.is-rufus {
+    transform: scale(0.65);
+    animation: rufus-spin 10s linear infinite reverse, rufus-bob 2.6s ease-in-out infinite;
+  }
+  /* Rufus distinguishing colors: phosphor-green head, smaller "R" badge */
+  .rufus-3d.is-rufus .r-head .rf      { background: #2eff7a; border-color: #0a4d24; box-shadow: inset 0 0 10px rgba(255,255,255,0.25), inset 0 -6px 14px rgba(0,80,30,0.4); }
+  .rufus-3d.is-rufus .r-head .rf.left { background: #1ec964; }
+  .rufus-3d.is-rufus .r-head .rf.right{ background: #1ec964; }
+  .rufus-3d.is-rufus .r-head .rf.top  { background: #6dffa0; }
+  .rufus-3d.is-rufus .r-head .rf.bottom{background: #129040; }
+  .rufus-3d.is-rufus .r-stud .rf      { background: #2eff7a; border-color: #0a4d24; }
+  .rufus-3d.is-rufus .r-stud .rf.top  { background: #6dffa0; }
+  .rufus-3d.is-rufus .r-eye          { background: #052015; }
+  .rufus-3d.is-rufus .r-smile        { border-color: #052015; }
+  .rufus-3d.is-rufus .r-name         { font-size: 22px; color: #ffcc1a; text-shadow: 0 0 8px #ffcc1a, 0 0 14px rgba(255,204,26,0.5); }
   @keyframes rufus-spin {
     0%   { transform: rotateY(  0deg) translateY(0); }
     100% { transform: rotateY(360deg) translateY(0); }
@@ -199,9 +250,38 @@
     box-shadow: inset 0 0 8px rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.35);
   }
 
-  /* HEAD STUD — LEGO yellow cylinder peg on top of head */
+  /* HEAD STUD — LEGO yellow cylinder peg on top of hair */
   .r-stud .rf { background: #ffcc1a; border-color: #8a6a00; box-shadow: inset 0 0 6px rgba(255,255,255,0.4), inset 0 -3px 6px rgba(0,0,0,0.4); }
-  .r-stud { width: 18px; height: 12px; margin: -134px 0 0 -9px; }
+  .r-stud { width: 18px; height: 12px; margin: -156px 0 0 -9px; }
+
+  /* HAIR PIECE — blonde LEGO hair, slightly wider than head */
+  .r-hair .rf { background: #ffd966; border-color: #b88a00; box-shadow: inset 0 0 8px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(120,80,0,0.35); }
+  .r-hair { width: 60px; height: 22px; margin: -144px 0 0 -30px; }
+  .r-hair .rf.front  { width: 60px; height: 22px; transform: translateZ(28px); background: linear-gradient(180deg, #ffe699 0%, #ffd966 60%, #f0c050 100%); }
+  .r-hair .rf.back   { width: 60px; height: 22px; transform: rotateY(180deg) translateZ(28px); background: #e6c050; }
+  .r-hair .rf.left   { width: 56px; height: 22px; transform: rotateY(-90deg) translateZ(30px); background: #e6c050; }
+  .r-hair .rf.right  { width: 56px; height: 22px; transform: rotateY(90deg)  translateZ(30px); background: #e6c050; }
+  .r-hair .rf.top    { width: 60px; height: 56px; transform: rotateX(90deg)  translateZ(11px); background: #ffe699; }
+  .r-hair .rf.bottom { display: none; }
+
+  /* BANGS — soft hair fringe on the front of the head face */
+  .r-bangs {
+    position: absolute; top: 0; left: -4px; right: -4px;
+    height: 14px;
+    background: linear-gradient(180deg, #f0c050 0%, #ffd966 70%, rgba(255,217,102,0) 100%);
+    border-radius: 0 0 60% 60% / 0 0 100% 100%;
+    pointer-events: none;
+  }
+
+  /* BLUSH — tiny cheek dots */
+  .r-blush {
+    position: absolute;
+    width: 6px; height: 4px; border-radius: 50%;
+    background: rgba(255,120,140,0.45);
+    top: 30px;
+  }
+  .r-blush.left  { left: 7px; }
+  .r-blush.right { right: 7px; }
   .r-stud .rf.front  { width: 18px; height: 12px; transform: translateZ(9px); }
   .r-stud .rf.back   { width: 18px; height: 12px; transform: rotateY(180deg) translateZ(9px); }
   .r-stud .rf.left   { width: 18px; height: 12px; transform: rotateY(-90deg) translateZ(9px); }
@@ -552,6 +632,9 @@
         sub-agents · rufus (RealEstateAPI crons) · signal_events writer · idempotency keeper
       </div>
       <div class="rufus-stage">
+       <div class="minifig-col">
+        <div class="minifig-name">LUCI</div>
+        <div class="minifig-role">orchestrator · enforcer · gatekeeper</div>
         <div class="rufus-3d">
           <!-- HEAD STUD -->
           <div class="r-part r-stud">
@@ -559,12 +642,21 @@
             <div class="rf left"></div><div class="rf right"></div>
             <div class="rf top"></div><div class="rf bottom"></div>
           </div>
+          <!-- HAIR PIECE (blonde) -->
+          <div class="r-part r-hair">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
           <!-- HEAD -->
           <div class="r-part r-head">
             <div class="rf front">
+              <div class="r-bangs"></div>
               <div class="r-face">
                 <div class="r-eye left"></div>
                 <div class="r-eye right"></div>
+                <div class="r-blush left"></div>
+                <div class="r-blush right"></div>
                 <div class="r-smile"></div>
               </div>
             </div>
@@ -616,6 +708,70 @@
           <!-- PEDESTAL SHADOW -->
           <div class="r-pedestal"></div>
         </div>
+       </div>
+       <!-- ═════════ RUFUS — Luci's cron scout sub-agent ═════════ -->
+       <div class="minifig-col">
+        <div class="minifig-name">RUFUS</div>
+        <div class="minifig-role">cron scout · RealEstateAPI</div>
+        <div class="rufus-3d is-rufus">
+          <div class="r-part r-stud">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-head">
+            <div class="rf front">
+              <div class="r-face">
+                <div class="r-eye left"></div>
+                <div class="r-eye right"></div>
+                <div class="r-smile"></div>
+              </div>
+            </div>
+            <div class="rf back"></div>
+            <div class="rf left"></div>
+            <div class="rf right"></div>
+            <div class="rf top"></div>
+            <div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-neck">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-torso">
+            <div class="rf front"><div class="r-name">R</div><div class="r-studs"><span></span><span></span><span></span></div></div>
+            <div class="rf back"></div>
+            <div class="rf left"></div>
+            <div class="rf right"></div>
+            <div class="rf top"></div>
+            <div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-arm r-arm-left">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-arm r-arm-right">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-leg r-leg-left">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
+          <div class="r-part r-leg r-leg-right">
+            <div class="rf front"></div><div class="rf back"></div>
+            <div class="rf left"></div><div class="rf right"></div>
+            <div class="rf top"></div><div class="rf bottom"></div>
+          </div>
+          <div class="r-pedestal"></div>
+        </div>
+       </div>
+      </div>
+      <div style="text-align:center; font-family:var(--mono); font-size:9px; color:var(--phosphor-dim); letter-spacing:0.14em; margin-top:-4px;">
+        always references RealEstateAPI docs before guessing field names
       </div>
       <div class="agent-mode" id="mode">▸ POLLING_TRACKED_IDS</div>
       <div class="scan-bar"><div class="label">SCAN · 10,000 IDs · daily cadence</div></div>
